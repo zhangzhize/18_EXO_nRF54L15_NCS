@@ -1,0 +1,14 @@
+# editors
+*.swp
+*~
+
+# build
+/build*/
+
+
+.pio
+.settings
+/Debug
+/Release
+
+.vscode
