@@ -14,7 +14,7 @@
 
 #include <zephyr/logging/log.h>
 /* Reduce verbosity to avoid RTT/log backend overflow during bursts */
-LOG_MODULE_REGISTER(app_uart, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(app_uart, LOG_LEVEL_INF);
 
 #define UART_TX_THREAD_STACKSIZE 2048
 #define UART_TX_THREAD_PRIORITY  6
@@ -28,7 +28,7 @@ const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart21));
 
 /* uart rx/tx memory pools for DMA */
 #define BUF_SIZE        128
-#define RX_DRV_NUM      8
+#define RX_DRV_NUM      32
 #define RX_COPY_NUM     64
 #define TX_USER_NUM     8
 #define TX_DRV_NUM      8
@@ -66,7 +66,38 @@ static volatile int uart_rx_rdys = 0;
 static volatile int uart_rx_buf_request_count = 0;
 static volatile int uart_rx_buf_released_count = 0;
 
-static volatile int uart_rx_byte_count = 0;
+static void uart_rx_restart_work_handler(struct k_work *work);
+static K_WORK_DELAYABLE_DEFINE(uart_rx_restart_work, uart_rx_restart_work_handler);
+
+static void uart_rx_restart_work_handler(struct k_work *work)
+{
+    ARG_UNUSED(work);
+
+    /* 确保 RX 关闭再开 */
+    (void)uart_rx_disable(uart_dev);
+
+    uint8_t *buf = NULL;
+    int err = k_mem_slab_alloc(&uart_rx_driver_slab, (void **)&buf, K_NO_WAIT);
+    if (err) {
+        LOG_ERR("RX restart: no driver slab (%d)", err);
+        /* 稍后再试 */
+        (void)k_work_reschedule(&uart_rx_restart_work, K_MSEC(20));
+        return;
+    }
+
+    err = uart_rx_enable(uart_dev, buf, BUF_SIZE, RX_INACTIVE_TIMEOUT_US);
+    if (err) {
+        LOG_ERR("RX restart: uart_rx_enable failed (%d)", err);
+        k_mem_slab_free(&uart_rx_driver_slab, buf);
+        /* 稍后再试 */
+        (void)k_work_reschedule(&uart_rx_restart_work, K_MSEC(20));
+        return;
+    }
+
+    LOG_WRN("RX restarted");
+}
+
+
 
 /* async serial callback */
 static void uart_callback(const struct device *dev,
@@ -90,16 +121,18 @@ static void uart_callback(const struct device *dev,
 
 	case UART_RX_RDY:
     {
+        static int cnt = 0;
+        if (++cnt >= 500) {
+            cnt = 0;
+            bsp_led_toggle();
+        }
+
         uint8_t *p = &(evt->data.rx.buf[evt->data.rx.offset]);
         size_t len = evt->data.rx.len;
 
-        LOG_INF("RX %d bytes", len);
-        
-        uart_rx_byte_count += len;
         uart_rx_rdys++;
 
         if (len > BUF_SIZE) {
-            LOG_ERR("RX length %d exceeds BUF_SIZE %d, dropping", (int)len, BUF_SIZE);
             break;
         }
 
@@ -137,10 +170,20 @@ static void uart_callback(const struct device *dev,
         uart_rx_buf_request_count++;
         LOG_INF("RX buffer request");
 		err = k_mem_slab_alloc(&uart_rx_driver_slab, (void **)&buf, K_NO_WAIT);
-		__ASSERT(err == 0, "Failed to allocate slab\n");
+		// __ASSERT(err == 0, "Failed to allocate slab\n");
+        if (err) {
+            LOG_ERR("RX BUF_REQUEST: no slab (%d)", err);
+            break;
+        }
 
 		err = uart_rx_buf_rsp(uart, buf, BUF_SIZE);
-		__ASSERT(err == 0, "Failed to provide new buffer\n");
+		// __ASSERT(err == 0, "Failed to provide new buffer\n");
+        if (err) {
+            LOG_ERR("RX BUF_REQUEST: uart_rx_buf_rsp failed (%d)", err);
+            k_mem_slab_free(&uart_rx_driver_slab, buf);
+            break;
+        }
+
 		break;
 	}
 
@@ -153,11 +196,12 @@ static void uart_callback(const struct device *dev,
     }
 
 	case UART_RX_DISABLED:
-        LOG_DBG("RX disabled");
+        LOG_WRN("RX disabled");
 		break;
 
 	case UART_RX_STOPPED:
-        LOG_INF("RX stopped");
+        LOG_ERR("RX stopped, reason=%d", evt->data.rx_stop.reason);
+        (void)k_work_reschedule(&uart_rx_restart_work, K_MSEC(10));
 		break;
 
     default:
@@ -386,7 +430,6 @@ void app_uart_print_stats(void)
     printk("UART TX stats: alloc=%d fail=%d free=%d q_put_fail=%d q_put_ok=%d tx_start=%d tx_err=%d tx_done=%d q_used=%d\n", tx_alloc_attempts, tx_alloc_fails, tx_free_count, q_put_fails, q_put_success, tx_start, tx_err, tx_done, q_used);
 
     printk("UART RX stats: rdys=%d alloc=%d alloc_fail=%d free=%d q_put_ok=%d q_put_fail=%d q_used=%d buf_req=%d buf_rel=%d\n", rx_rdys, rx_alloc_attempts, rx_alloc_fails, rx_free_count, rx_q_put_ok, rx_q_put_fails, rx_q_used, rx_buf_req, rx_buf_rel);
-    printk("UART RX total bytes received: %d\n", uart_rx_byte_count);
 }
 
 K_THREAD_DEFINE(app_uart_rx_id, UART_RX_THREAD_STACKSIZE, app_uart_rx_thread, NULL, NULL, NULL, UART_RX_THREAD_PRIORITY, 0, 0);

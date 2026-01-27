@@ -1,0 +1,16 @@
+description: BNO08x Sensor Binding
+
+compatible: "vnd,bno08x"  # 注意这里，要和 overlay 里的一致
+
+include: i2c-device.yaml  # 继承通用 I2C 属性
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: Interrupt pin
+
+  reset-gpios:
+    type: phandle-array
+    required: false
+    description: Reset pin

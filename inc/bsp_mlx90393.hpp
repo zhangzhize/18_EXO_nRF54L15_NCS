@@ -154,9 +154,9 @@ const float mlx90393_tconv[8][4] = {
 
 class Mlx90393 {
 public:
-    Mlx90393(const struct i2c_dt_spec dev_spec);
+    Mlx90393();
 
-    bool begin();
+    bool begin(const struct i2c_dt_spec *dev_spec);
 
     bool reset();
     bool exitMode();
@@ -180,7 +180,7 @@ public:
     bool readData(float *x, float *y, float *z);
 
 private:
-    const struct i2c_dt_spec _i2c;
+    const struct i2c_dt_spec *_i2c;
 
     bool readRegister(uint8_t reg, uint16_t *data);
     bool writeRegister(uint8_t reg, uint16_t data);

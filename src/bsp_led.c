@@ -19,6 +19,8 @@ void bsp_led_init(void)
     }
 
     gpio_pin_set_dt(&led, 1);
+    k_sleep(K_MSEC(1000));
+    gpio_pin_set_dt(&led, 0);
 }
 
 void bsp_led_toggle(void)

@@ -26,24 +26,6 @@ extern bool ready;
 extern struct esb_payload rx_payload;
 extern struct esb_payload tx_payload;
 
-enum
-{
-    kFoot_ADC = 0x01,
-    kFoot_ADC_IMU = 0x02,
-};
-
-struct sensor_data_packet_t
-{
-    uint8_t data_type;
-    uint8_t left_foot_adc_data[8];
-    uint8_t right_foot_adc_data[8];
-    uint8_t left_foot_imu_data[12];
-    uint8_t right_foot_imu_data[12];
-};
-BUILD_ASSERT(sizeof(struct sensor_data_packet_t) == 41, "sensor_data_packet_t must be 41 bytes");
-
-extern struct sensor_data_packet_t sensor_data;
-
 int clocks_start(void);
 int esb_initialize(void);
 

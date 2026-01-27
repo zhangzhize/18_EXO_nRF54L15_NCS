@@ -156,28 +156,27 @@ static struct bt_nus_cb nus_cb = {
 int bsp_ble_init(void)
 {
     int err;
-    LOG_INF("A.");
 	err = bt_enable(NULL);
 	if (err) {
 		LOG_ERR("Failed to enable Bluetooth (err: %d)", err);
 		return -1;
 	}
-    LOG_INF("B.");
+
     bt_gatt_cb_register(&gatt_callbacks);
-    LOG_INF("C.");
+
 	err = bt_nus_init(&nus_cb);
 	if (err) {
 		LOG_ERR("Failed to initialize UART service (err: %d)", err);
 		return -1;
 	}
-    LOG_INF("D.");
+
 	k_work_init(&adv_work, adv_work_handler);
     k_work_init_delayable(&conn_update_work, conn_update_work_handler);
-    LOG_INF("E.");
+
     advertising_start();
-    LOG_INF("F.");
+
     app_uart_rx_cb_register(ble_uart_rx_cb);
-    LOG_INF("G.");
+    
     return 0;
 }
 
@@ -189,8 +188,6 @@ void ble_uart_rx_cb(uint8_t *byte, size_t len)
 	if (current_conn == NULL || !nus_notify_enabled) {
 		return;
 	}
-
-    // return;
 
 	int err = bt_nus_send(current_conn, byte, len);
 	if (err) {

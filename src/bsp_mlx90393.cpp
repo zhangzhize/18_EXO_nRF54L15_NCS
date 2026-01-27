@@ -5,11 +5,13 @@
 
 LOG_MODULE_REGISTER(mlx090393, LOG_LEVEL_INF);
 
-Mlx90393::Mlx90393(const struct i2c_dt_spec dev_spec) : _i2c(dev_spec) {}
+Mlx90393::Mlx90393() {}
 
-bool Mlx90393::begin()
+bool Mlx90393::begin(const struct i2c_dt_spec *dev_spec)
 {
-    if (!device_is_ready(_i2c.bus))
+    _i2c = dev_spec;
+
+    if (!device_is_ready(_i2c->bus))
     {
         LOG_ERR("I2C bus not ready");
         return false;
@@ -354,7 +356,7 @@ uint8_t Mlx90393::transceive(uint8_t *txbuf, uint8_t txlen, uint8_t *rxbuf, uint
     uint8_t rxbuf2[rxlen + 2];
 
     /* Write stage */
-    if (i2c_write_dt(&_i2c, txbuf, txlen) < 0) {
+    if (i2c_write_dt(_i2c, txbuf, txlen) < 0) {
         return MLX90393_STATUS_ERROR;
     }
 
@@ -363,7 +365,7 @@ uint8_t Mlx90393::transceive(uint8_t *txbuf, uint8_t txlen, uint8_t *rxbuf, uint
     }
 
     /* Read status byte plus any others */
-    if (i2c_read_dt(&_i2c, rxbuf2, rxlen + 1) < 0) {
+    if (i2c_read_dt(_i2c, rxbuf2, rxlen + 1) < 0) {
         return MLX90393_STATUS_ERROR;
     }
 

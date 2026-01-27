@@ -24,15 +24,6 @@ bool ready = true;
 struct esb_payload rx_payload;
 struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0x01, 0x01, 0x00, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
 
-struct sensor_data_packet_t sensor_data = 
-{
-    .data_type = kFoot_ADC,
-    .left_foot_adc_data = {0},
-    .right_foot_adc_data = {0},
-    .left_foot_imu_data = {0},
-    .right_foot_imu_data = {0},
-};
-
 static void event_handler(struct esb_evt const *event)
 {
     ready = true;
