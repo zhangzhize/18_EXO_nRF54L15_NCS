@@ -44,7 +44,6 @@
 #include <string.h>
 #include <math.h>
 
-
 static const struct i2c_dt_spec *_i2c_dev = NULL;
 static const struct gpio_dt_spec *_int_dev = NULL;
 static const struct gpio_dt_spec *_rst_dev = NULL;

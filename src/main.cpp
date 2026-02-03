@@ -12,6 +12,7 @@
 #include "bsp_led.h"
 #include "bsp_mlx90393.hpp"
 #include "SparkFun_BNO08x_Library.hpp"
+#include "SparkFun_ADS122C04_Library.hpp"
 #include "app_uart.h"
 #include <zephyr/logging/log.h>
 
@@ -30,11 +31,17 @@ struct sensor_data_packet_t sensor_data =
 /** mlx90393 */
 // const struct i2c_dt_spec mlx90393_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(mlx90393));
 // Mlx90393 mlx90393;
+
 /** bno085 */
 const struct i2c_dt_spec bno085_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(bno085));
-const struct gpio_dt_spec bno085_irq = GPIO_DT_SPEC_GET(DT_NODELABEL(bno085), irq_gpios);
-const struct gpio_dt_spec bno085_reset = GPIO_DT_SPEC_GET(DT_NODELABEL(bno085), reset_gpios);
+const struct gpio_dt_spec bno085_intn = GPIO_DT_SPEC_GET(DT_NODELABEL(bno085), intn_gpios);
+const struct gpio_dt_spec bno085_nrst = GPIO_DT_SPEC_GET(DT_NODELABEL(bno085), nrst_gpios);
 BNO08x bno085;
+
+/** ads122c04 */
+const struct i2c_dt_spec ads122c04_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(ads122c04));
+const struct gpio_dt_spec ads122c04_drdy = GPIO_DT_SPEC_GET(DT_NODELABEL(ads122c04), drdy_gpios);
+SFE_ADS122C04 ads122c04;
 
 #endif
 
@@ -102,19 +109,27 @@ int main(void)
     //     return 0;
     // }
 
-    if (!bno085.begin(&bno085_i2c, &bno085_irq, &bno085_reset))
+    if (!bno085.begin(&bno085_i2c, &bno085_intn, &bno085_nrst))
     {
         LOG_ERR("bno085 begin failed!");
         return 0;
     }
-    if (bno085.enableRotationVector(100) == true)
-    {
-        LOG_INF("bno085 rotation vector enabled");
-    }
-    else
+    if (!bno085.enableRotationVector(100))
     {
         LOG_ERR("bno085 rotation vector enable failed!");
     }
+
+    if (!ads122c04.begin(&ads122c04_i2c, &ads122c04_drdy))
+    {
+        LOG_ERR("ads122c04 begin failed!");
+        return 0;
+    }
+    if (!ads122c04.configureADCmode(ADS122C04_BRIDGE_MODE, ADS122C04_DATA_RATE_90SPS))
+    {
+        LOG_ERR("ads122c04 configureADCmode failed!");
+        return 0;
+    }
+    k_msleep(1000);
 
     bsp_adc_init();
 
@@ -124,7 +139,7 @@ int main(void)
 	k_timer_init(&k_timer, k_timer_expiry, NULL);
 	k_timer_start(&k_timer, K_USEC(SAMPLE_PERIOD_US), K_USEC(SAMPLE_PERIOD_US));
 
-/*
+
 #if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
     while (1)
     {
@@ -151,13 +166,15 @@ int main(void)
                 float quatReal = bno085.getQuatReal();
                 float quatRadianAccuracy = bno085.getQuatRadianAccuracy();
 
-                // printk("quatI: %f, quatJ: %f, quatK: %f, quatReal: %f, quatRadianAccuracy: %f\r\n", quatI, quatJ, quatK, quatReal, quatRadianAccuracy);
+                LOG_INF("quatI: %f, quatJ: %f, quatK: %f, quatReal: %f, quatRadianAccuracy: %f", quatI, quatJ, quatK, quatReal, quatRadianAccuracy);
             }
         }
+
+        float milvol = ads122c04.readBridgeVoltage();
+        LOG_INF("Bridge voltage: %f", milvol * 1000.0f);
     }
     
 #endif
-*/
 
 	while (1)
     {

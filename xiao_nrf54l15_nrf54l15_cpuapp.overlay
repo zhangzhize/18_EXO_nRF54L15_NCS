@@ -1,12 +1,6 @@
-// / {
-//     zephyr,user {
-//         io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>;
-//     };
-// };
-
 / {
     zephyr,user {
-        io-channels = <&adc 0>, <&adc 1>;
+        io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>;
     };
 };
 
@@ -41,10 +35,15 @@
         reg = <0x0c>;
     };
     bno085: bno085@4b {
-        compatible = "vnd,bno08x";
+        compatible = "bno08x";
         reg = <0x4b>;
-        irq-gpios = <&gpio1 6 (GPIO_ACTIVE_LOW)>;
-        reset-gpios = <&gpio2 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+        intn-gpios = <&gpio1 14 (GPIO_ACTIVE_LOW)>;
+        nrst-gpios = <&gpio2 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+    };
+    ads122c04: ads122c04@40 {
+        compatible = "ads122c04";
+        reg = <0x40>;
+        drdy-gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
     };
 };
 

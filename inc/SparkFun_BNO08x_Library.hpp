@@ -40,8 +40,8 @@
   Thank you Adafruit and your developers for all your hard work put into your Library!
 */
 
-#ifndef BNO08X_ZEPHYR_H
-#define BNO08X_ZEPHYR_H
+#ifndef SPARKFUN_BNO08X_LIBRARY_HPP
+#define SPARKFUN_BNO08X_LIBRARY_HPP
 
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/i2c.h>

@@ -48,6 +48,10 @@ struct esb_payload {
 	uint8_t _unused;
 };
 
+extern bool ready;
+extern struct esb_payload rx_payload;
+extern struct esb_payload tx_payload;
+
 /* 与 ESB 版本保持一致的 symbol（用于链接期满足引用）。 */
 static inline int clocks_start(void)
 {

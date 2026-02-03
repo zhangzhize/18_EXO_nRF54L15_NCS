@@ -196,4 +196,16 @@ void ble_uart_rx_cb(uint8_t *byte, size_t len)
 	}
 }
 
+void ble_nus_send(const uint8_t *data, uint16_t len)
+{
+    if (current_conn == NULL || !nus_notify_enabled) {
+        return;
+    }
+
+    int err = bt_nus_send(current_conn, data, len);
+    if (err) {
+        /* Busy path: avoid logs unless debugging. */
+        LOG_DBG("bt_nus_send failed: %d", err);
+    }
+}
 #endif /* CONFIG_BT */

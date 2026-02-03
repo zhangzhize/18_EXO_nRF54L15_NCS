@@ -13,6 +13,7 @@ extern "C" {
 
 int bsp_ble_init(void);
 void ble_uart_rx_cb(uint8_t *byte, size_t len);
+void ble_nus_send(const uint8_t *data, uint16_t len);
 
 #else /* CONFIG_BT */
 
@@ -26,6 +27,12 @@ static inline void ble_uart_rx_cb(uint8_t *byte, size_t len)
 {
 	(void)byte;
 	(void)len;
+}
+
+static inline void ble_nus_send(const uint8_t *data, uint16_t len)
+{
+    (void)data;
+    (void)len;
 }
 
 #endif /* CONFIG_BT */

@@ -1,0 +1,11 @@
+description: ADS122C04 Sensor Binding
+
+compatible: "ads122c04"  # 注意这里，要和 overlay 里的一致
+
+include: i2c-device.yaml  # 继承通用 I2C 属性
+
+properties:
+  drdy-gpios:
+    type: phandle-array
+    required: true
+    description: Data ready pin
