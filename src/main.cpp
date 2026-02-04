@@ -139,24 +139,20 @@ int main(void)
 	k_timer_init(&k_timer, k_timer_expiry, NULL);
 	k_timer_start(&k_timer, K_USEC(SAMPLE_PERIOD_US), K_USEC(SAMPLE_PERIOD_US));
 
-
-#if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
     while (1)
     {
-        k_sleep(K_MSEC(10));
+        k_sem_take(&k_timer_sem, K_FOREVER);
+
+#if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
         if (bno085.wasReset())
         {
-            LOG_INF("sensor was reset"); 
-            if (bno085.enableRotationVector(100) == true)
-            {
-                LOG_INF("bno085 rotation vector enabled");
-            }
-            else
+            LOG_INF("bno085 was reset"); 
+            if (!bno085.enableRotationVector(100))
             {
                 LOG_ERR("bno085 rotation vector enable failed!");
             }
         }
-        if (bno085.getSensorEvent() == true)
+        if (bno085.getSensorEvent())
         {
             if (bno085.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR)
             {
@@ -172,15 +168,6 @@ int main(void)
 
         float milvol = ads122c04.readBridgeVoltage();
         LOG_INF("Bridge voltage: %f", milvol * 1000.0f);
-    }
-    
-#endif
-
-	while (1)
-    {
-        k_sem_take(&k_timer_sem, K_FOREVER);
-
-#if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
         bsp_adc_read_channels();  /* 166 us */
 
         tx_payload.data[0] = THIS_NODE_ID;
@@ -188,7 +175,6 @@ int main(void)
         memcpy(tx_payload.data + 1 + sizeof(mV_ain0), &mV_ain1, sizeof(mV_ain1));
         tx_payload.length = 1 + sizeof(mV_ain0) + sizeof(mV_ain1);
         tx_payload.noack = false;
-        
         if (ready)
         {
             ready = false;
@@ -210,9 +196,9 @@ int main(void)
         {
             app_uart_tx(reinterpret_cast<const uint8_t*>(&sensor_data), 1 + 2 * 8 + 2 * 12);
         }
-
 #endif
-	}
+
+    } // while (1)
 
     return 0;
 }
