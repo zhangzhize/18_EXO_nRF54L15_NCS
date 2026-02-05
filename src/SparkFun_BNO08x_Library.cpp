@@ -6,15 +6,15 @@
 
   Originally written by Nathan Seidle @ SparkFun Electronics, December 28th, 2017
 
-  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the 
+  Adjusted by Pete Lewis @ SparkFun Electronics, June 2023 to incorporate the
   CEVA Sensor Hub Driver, found here:
   https://github.com/ceva-dsp/sh2
 
-  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert 
+  Also, utilizing code from the Adafruit BNO08x Arduino Library by Bryan Siepert
   for Adafruit Industries. Found here:
   https://github.com/adafruit/Adafruit_BNO08x
 
-  Also, utilizing I2C and SPI read/write functions and code from the Adafruit 
+  Also, utilizing I2C and SPI read/write functions and code from the Adafruit
   BusIO library found here:
   https://github.com/adafruit/Adafruit_BusIO
 
@@ -64,30 +64,34 @@ static void hal_hardwareReset(void);
 
 static bool hal_wait_for_int(void);
 
-
-//Initializes the sensor with basic settings using I2C
-//Returns false if sensor is not detected
-bool BNO08x::begin(const struct i2c_dt_spec *i2c_dev, 
-                      const struct gpio_dt_spec *int_dev, 
-                      const struct gpio_dt_spec *rst_dev)
+// Initializes the sensor with basic settings using I2C
+// Returns false if sensor is not detected
+bool BNO08x::begin(const struct i2c_dt_spec *i2c_dev,
+                   const struct gpio_dt_spec *int_dev,
+                   const struct gpio_dt_spec *rst_dev)
 {
     _i2c_dev = i2c_dev;
     _int_dev = int_dev;
     _rst_dev = rst_dev;
 
-    if (_rst_dev != NULL) {
-        if (!device_is_ready(_rst_dev->port)) return false;
-        gpio_pin_configure_dt(_rst_dev, GPIO_OUTPUT_INACTIVE); 
+    if (_rst_dev != NULL)
+    {
+        if (!device_is_ready(_rst_dev->port))
+            return false;
+        gpio_pin_configure_dt(_rst_dev, GPIO_OUTPUT_INACTIVE);
     }
-    if (_int_dev != NULL) {
-        if (!device_is_ready(_int_dev->port)) return false;
+    if (_int_dev != NULL)
+    {
+        if (!device_is_ready(_int_dev->port))
+            return false;
         gpio_pin_configure_dt(_int_dev, GPIO_INPUT);
     }
 
-    if(_int_dev != NULL) hal_wait_for_int();
+    if (_int_dev != NULL)
+        hal_wait_for_int();
 
-  	if (isConnected() == false) // Check for sensor by verifying ACK response
-        return (false); 
+    if (isConnected() == false) // Check for sensor by verifying ACK response
+        return (false);
 
     _HAL.open = i2chal_open;
     _HAL.close = i2chal_close;
@@ -104,489 +108,489 @@ bool BNO08x::begin(const struct i2c_dt_spec *i2c_dev,
 // Return the roll (rotation around the x-axis) in Radians
 float BNO08x::getRoll()
 {
-	float dqw = getQuatReal();
-	float dqx = getQuatI();
-	float dqy = getQuatJ();
-	float dqz = getQuatK();
+    float dqw = getQuatReal();
+    float dqx = getQuatI();
+    float dqy = getQuatJ();
+    float dqz = getQuatK();
 
-	float norm = sqrt(dqw*dqw + dqx*dqx + dqy*dqy + dqz*dqz);
-	dqw = dqw/norm;
-	dqx = dqx/norm;
-	dqy = dqy/norm;
-	dqz = dqz/norm;
+    float norm = sqrt(dqw * dqw + dqx * dqx + dqy * dqy + dqz * dqz);
+    dqw = dqw / norm;
+    dqx = dqx / norm;
+    dqy = dqy / norm;
+    dqz = dqz / norm;
 
-	float ysqr = dqy * dqy;
+    float ysqr = dqy * dqy;
 
-	// roll (x-axis rotation)
-	float t0 = +2.0f * (dqw * dqx + dqy * dqz);
-	float t1 = +1.0f - 2.0f * (dqx * dqx + ysqr);
-	float roll = atan2(t0, t1);
+    // roll (x-axis rotation)
+    float t0 = +2.0f * (dqw * dqx + dqy * dqz);
+    float t1 = +1.0f - 2.0f * (dqx * dqx + ysqr);
+    float roll = atan2(t0, t1);
 
-	return (roll);
+    return (roll);
 }
 
 // Return the pitch (rotation around the y-axis) in Radians
 float BNO08x::getPitch()
 {
-	float dqw = getQuatReal();
-	float dqx = getQuatI();
-	float dqy = getQuatJ();
-	float dqz = getQuatK();
+    float dqw = getQuatReal();
+    float dqx = getQuatI();
+    float dqy = getQuatJ();
+    float dqz = getQuatK();
 
-	float norm = sqrt(dqw*dqw + dqx*dqx + dqy*dqy + dqz*dqz);
-	dqw = dqw/norm;
-	dqx = dqx/norm;
-	dqy = dqy/norm;
-	dqz = dqz/norm;
+    float norm = sqrt(dqw * dqw + dqx * dqx + dqy * dqy + dqz * dqz);
+    dqw = dqw / norm;
+    dqx = dqx / norm;
+    dqy = dqy / norm;
+    dqz = dqz / norm;
 
-	//float ysqr = dqy * dqy;
+    // float ysqr = dqy * dqy;
 
-	// pitch (y-axis rotation)
-	float t2 = +2.0f * (dqw * dqy - dqz * dqx);
-	t2 = t2 > 1.0f ? 1.0f : t2;
-	t2 = t2 < -1.0f ? -1.0f : t2;
-	float pitch = asin(t2);
+    // pitch (y-axis rotation)
+    float t2 = +2.0f * (dqw * dqy - dqz * dqx);
+    t2 = t2 > 1.0f ? 1.0f : t2;
+    t2 = t2 < -1.0f ? -1.0f : t2;
+    float pitch = asin(t2);
 
-	return (pitch);
+    return (pitch);
 }
 
 // Return the yaw / heading (rotation around the z-axis) in Radians
 float BNO08x::getYaw()
 {
-	float dqw = getQuatReal();
-	float dqx = getQuatI();
-	float dqy = getQuatJ();
-	float dqz = getQuatK();
+    float dqw = getQuatReal();
+    float dqx = getQuatI();
+    float dqy = getQuatJ();
+    float dqz = getQuatK();
 
-	float norm = sqrt(dqw*dqw + dqx*dqx + dqy*dqy + dqz*dqz);
-	dqw = dqw/norm;
-	dqx = dqx/norm;
-	dqy = dqy/norm;
-	dqz = dqz/norm;
+    float norm = sqrt(dqw * dqw + dqx * dqx + dqy * dqy + dqz * dqz);
+    dqw = dqw / norm;
+    dqx = dqx / norm;
+    dqy = dqy / norm;
+    dqz = dqz / norm;
 
-	float ysqr = dqy * dqy;
+    float ysqr = dqy * dqy;
 
-	// yaw (z-axis rotation)
-	float t3 = +2.0f * (dqw * dqz + dqx * dqy);
-	float t4 = +1.0f - 2.0f * (ysqr + dqz * dqz);
-	float yaw = atan2(t3, t4);
+    // yaw (z-axis rotation)
+    float t3 = +2.0f * (dqw * dqz + dqx * dqy);
+    float t4 = +1.0f - 2.0f * (ysqr + dqz * dqz);
+    float yaw = atan2(t3, t4);
 
-	return (yaw);
+    return (yaw);
 }
 
-//Gets the full quaternion
-//i,j,k,real output floats
+// Gets the full quaternion
+// i,j,k,real output floats
 void BNO08x::getQuat(float &i, float &j, float &k, float &real, float &radAccuracy, uint8_t &accuracy)
 {
-	i = qToFloat(rawQuatI, rotationVector_Q1);
-	j = qToFloat(rawQuatJ, rotationVector_Q1);
-	k = qToFloat(rawQuatK, rotationVector_Q1);
-	real = qToFloat(rawQuatReal, rotationVector_Q1);
-	radAccuracy = qToFloat(rawQuatRadianAccuracy, rotationVector_Q1);
-	accuracy = quatAccuracy;
+    i = qToFloat(rawQuatI, rotationVector_Q1);
+    j = qToFloat(rawQuatJ, rotationVector_Q1);
+    k = qToFloat(rawQuatK, rotationVector_Q1);
+    real = qToFloat(rawQuatReal, rotationVector_Q1);
+    radAccuracy = qToFloat(rawQuatRadianAccuracy, rotationVector_Q1);
+    accuracy = quatAccuracy;
 }
 
-//Return the rotation vector quaternion I
+// Return the rotation vector quaternion I
 float BNO08x::getQuatI()
 {
-	return _sensor_value->un.rotationVector.i;
+    return _sensor_value->un.rotationVector.i;
 }
 
-//Return the rotation vector quaternion J
+// Return the rotation vector quaternion J
 float BNO08x::getQuatJ()
 {
-	return _sensor_value->un.rotationVector.j;
+    return _sensor_value->un.rotationVector.j;
 }
 
-//Return the rotation vector quaternion K
+// Return the rotation vector quaternion K
 float BNO08x::getQuatK()
 {
-	return _sensor_value->un.rotationVector.k;
+    return _sensor_value->un.rotationVector.k;
 }
 
-//Return the rotation vector quaternion Real
+// Return the rotation vector quaternion Real
 float BNO08x::getQuatReal()
 {
-	return _sensor_value->un.rotationVector.real;
+    return _sensor_value->un.rotationVector.real;
 }
 
-//Return the rotation vector radian accuracy
+// Return the rotation vector radian accuracy
 float BNO08x::getQuatRadianAccuracy()
 {
-	return _sensor_value->un.rotationVector.accuracy;
+    return _sensor_value->un.rotationVector.accuracy;
 }
 
-//Return the rotation vector sensor event report status accuracy
+// Return the rotation vector sensor event report status accuracy
 uint8_t BNO08x::getQuatAccuracy()
 {
-	return _sensor_value->status;
+    return _sensor_value->status;
 }
 
-//Return the game rotation vector quaternion I
+// Return the game rotation vector quaternion I
 float BNO08x::getGameQuatI()
 {
-	return _sensor_value->un.gameRotationVector.i;
+    return _sensor_value->un.gameRotationVector.i;
 }
 
-//Return the game rotation vector quaternion J
+// Return the game rotation vector quaternion J
 float BNO08x::getGameQuatJ()
 {
-	return _sensor_value->un.gameRotationVector.j;
+    return _sensor_value->un.gameRotationVector.j;
 }
 
-//Return the game rotation vector quaternion K
+// Return the game rotation vector quaternion K
 float BNO08x::getGameQuatK()
 {
-	return _sensor_value->un.gameRotationVector.k;
+    return _sensor_value->un.gameRotationVector.k;
 }
 
-//Return the game rotation vector quaternion Real
+// Return the game rotation vector quaternion Real
 float BNO08x::getGameQuatReal()
 {
-	return _sensor_value->un.gameRotationVector.real;
+    return _sensor_value->un.gameRotationVector.real;
 }
 
-//Gets the full acceleration
-//x,y,z output floats
+// Gets the full acceleration
+// x,y,z output floats
 void BNO08x::getAccel(float &x, float &y, float &z, uint8_t &accuracy)
 {
-	x = qToFloat(rawAccelX, accelerometer_Q1);
-	y = qToFloat(rawAccelY, accelerometer_Q1);
-	z = qToFloat(rawAccelZ, accelerometer_Q1);
-	accuracy = accelAccuracy;
+    x = qToFloat(rawAccelX, accelerometer_Q1);
+    y = qToFloat(rawAccelY, accelerometer_Q1);
+    z = qToFloat(rawAccelZ, accelerometer_Q1);
+    accuracy = accelAccuracy;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 float BNO08x::getAccelX()
 {
-	return _sensor_value->un.accelerometer.x;
+    return _sensor_value->un.accelerometer.x;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 float BNO08x::getAccelY()
 {
-	return _sensor_value->un.accelerometer.y;
+    return _sensor_value->un.accelerometer.y;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 float BNO08x::getAccelZ()
 {
-	return _sensor_value->un.accelerometer.z;
+    return _sensor_value->un.accelerometer.z;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 uint8_t BNO08x::getAccelAccuracy()
 {
-	return _sensor_value->status;
+    return _sensor_value->status;
 }
 
 // linear acceleration, i.e. minus gravity
 
-//Gets the full lin acceleration
-//x,y,z output floats
+// Gets the full lin acceleration
+// x,y,z output floats
 void BNO08x::getLinAccel(float &x, float &y, float &z, uint8_t &accuracy)
 {
-	x = qToFloat(rawLinAccelX, linear_accelerometer_Q1);
-	y = qToFloat(rawLinAccelY, linear_accelerometer_Q1);
-	z = qToFloat(rawLinAccelZ, linear_accelerometer_Q1);
-	accuracy = accelLinAccuracy;
+    x = qToFloat(rawLinAccelX, linear_accelerometer_Q1);
+    y = qToFloat(rawLinAccelY, linear_accelerometer_Q1);
+    z = qToFloat(rawLinAccelZ, linear_accelerometer_Q1);
+    accuracy = accelLinAccuracy;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 float BNO08x::getLinAccelX()
 {
-	return _sensor_value->un.linearAcceleration.x;
+    return _sensor_value->un.linearAcceleration.x;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 float BNO08x::getLinAccelY()
 {
-	return _sensor_value->un.linearAcceleration.y;
+    return _sensor_value->un.linearAcceleration.y;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 float BNO08x::getLinAccelZ()
 {
-	return _sensor_value->un.linearAcceleration.z;
+    return _sensor_value->un.linearAcceleration.z;
 }
 
-//Return the acceleration component
+// Return the acceleration component
 uint8_t BNO08x::getLinAccelAccuracy()
 {
-	return _sensor_value->status;
+    return _sensor_value->status;
 }
 
-//Gets the full gyro vector
-//x,y,z output floats
+// Gets the full gyro vector
+// x,y,z output floats
 void BNO08x::getGyro(float &x, float &y, float &z, uint8_t &accuracy)
 {
-	x = qToFloat(rawGyroX, gyro_Q1);
-	y = qToFloat(rawGyroY, gyro_Q1);
-	z = qToFloat(rawGyroZ, gyro_Q1);
-	accuracy = gyroAccuracy;
+    x = qToFloat(rawGyroX, gyro_Q1);
+    y = qToFloat(rawGyroY, gyro_Q1);
+    z = qToFloat(rawGyroZ, gyro_Q1);
+    accuracy = gyroAccuracy;
 }
 
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getGyroX()
 {
-	return _sensor_value->un.gyroscope.x;
+    return _sensor_value->un.gyroscope.x;
 }
 
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getGyroY()
 {
-	return _sensor_value->un.gyroscope.y;
+    return _sensor_value->un.gyroscope.y;
 }
 
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getGyroZ()
 {
-	return _sensor_value->un.gyroscope.z;
+    return _sensor_value->un.gyroscope.z;
 }
 
-//Return the gyro component
+// Return the gyro component
 uint8_t BNO08x::getGyroAccuracy()
 {
-	return (gyroAccuracy);
+    return (gyroAccuracy);
 }
 
-//Gets the full uncalibrated gyro vector
-//x,y,z,bx,by,bz output floats
+// Gets the full uncalibrated gyro vector
+// x,y,z,bx,by,bz output floats
 void BNO08x::getUncalibratedGyro(float &x, float &y, float &z, float &bx, float &by, float &bz, uint8_t &accuracy)
 {
-	x = _sensor_value->un.gyroscopeUncal.x;
-	y = _sensor_value->un.gyroscopeUncal.y;
-	z = _sensor_value->un.gyroscopeUncal.z;
-	bx = _sensor_value->un.gyroscopeUncal.biasX;
-	by = _sensor_value->un.gyroscopeUncal.biasY;
-	bz = _sensor_value->un.gyroscopeUncal.biasZ;
-	accuracy = _sensor_value->status;
+    x = _sensor_value->un.gyroscopeUncal.x;
+    y = _sensor_value->un.gyroscopeUncal.y;
+    z = _sensor_value->un.gyroscopeUncal.z;
+    bx = _sensor_value->un.gyroscopeUncal.biasX;
+    by = _sensor_value->un.gyroscopeUncal.biasY;
+    bz = _sensor_value->un.gyroscopeUncal.biasZ;
+    accuracy = _sensor_value->status;
 }
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getUncalibratedGyroX()
 {
-	return _sensor_value->un.gyroscopeUncal.x;
+    return _sensor_value->un.gyroscopeUncal.x;
 }
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getUncalibratedGyroY()
 {
-	return _sensor_value->un.gyroscopeUncal.y;
+    return _sensor_value->un.gyroscopeUncal.y;
 }
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getUncalibratedGyroZ()
 {
-	return _sensor_value->un.gyroscopeUncal.z;
+    return _sensor_value->un.gyroscopeUncal.z;
 }
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getUncalibratedGyroBiasX()
 {
-	return _sensor_value->un.gyroscopeUncal.biasX;
+    return _sensor_value->un.gyroscopeUncal.biasX;
 }
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getUncalibratedGyroBiasY()
 {
-	return _sensor_value->un.gyroscopeUncal.biasY;
+    return _sensor_value->un.gyroscopeUncal.biasY;
 }
-//Return the gyro component
+// Return the gyro component
 float BNO08x::getUncalibratedGyroBiasZ()
 {
-	return _sensor_value->un.gyroscopeUncal.biasZ;
+    return _sensor_value->un.gyroscopeUncal.biasZ;
 }
 
-//Return the gyro component
+// Return the gyro component
 uint8_t BNO08x::getUncalibratedGyroAccuracy()
 {
-	return (UncalibGyroAccuracy);
+    return (UncalibGyroAccuracy);
 }
 
-//Gets the full gravity vector
-//x,y,z output floats
+// Gets the full gravity vector
+// x,y,z output floats
 void BNO08x::getGravity(float &x, float &y, float &z, uint8_t &accuracy)
 {
-	x = qToFloat(gravityX, gravity_Q1);
-	y = qToFloat(gravityX, gravity_Q1);
-	z = qToFloat(gravityX, gravity_Q1);
-	accuracy = gravityAccuracy;
+    x = qToFloat(gravityX, gravity_Q1);
+    y = qToFloat(gravityX, gravity_Q1);
+    z = qToFloat(gravityX, gravity_Q1);
+    accuracy = gravityAccuracy;
 }
 
 float BNO08x::getGravityX()
 {
-	return _sensor_value->un.gravity.x;
+    return _sensor_value->un.gravity.x;
 }
 
-//Return the gravity component
+// Return the gravity component
 float BNO08x::getGravityY()
 {
-	return _sensor_value->un.gravity.y;
+    return _sensor_value->un.gravity.y;
 }
 
-//Return the gravity component
+// Return the gravity component
 float BNO08x::getGravityZ()
 {
-	return _sensor_value->un.gravity.z;
+    return _sensor_value->un.gravity.z;
 }
 
 uint8_t BNO08x::getGravityAccuracy()
 {
-	return _sensor_value->status;
+    return _sensor_value->status;
 }
 
-//Gets the full mag vector
-//x,y,z output floats
+// Gets the full mag vector
+// x,y,z output floats
 void BNO08x::getMag(float &x, float &y, float &z, uint8_t &accuracy)
 {
-	x = qToFloat(rawMagX, magnetometer_Q1);
-	y = qToFloat(rawMagY, magnetometer_Q1);
-	z = qToFloat(rawMagZ, magnetometer_Q1);
-	accuracy = magAccuracy;
+    x = qToFloat(rawMagX, magnetometer_Q1);
+    y = qToFloat(rawMagY, magnetometer_Q1);
+    z = qToFloat(rawMagZ, magnetometer_Q1);
+    accuracy = magAccuracy;
 }
 
-//Return the magnetometer component
+// Return the magnetometer component
 float BNO08x::getMagX()
 {
-	return _sensor_value->un.magneticField.x;
+    return _sensor_value->un.magneticField.x;
 }
 
-//Return the magnetometer component
+// Return the magnetometer component
 float BNO08x::getMagY()
 {
-	return _sensor_value->un.magneticField.y;
+    return _sensor_value->un.magneticField.y;
 }
 
-//Return the magnetometer component
+// Return the magnetometer component
 float BNO08x::getMagZ()
 {
-	return _sensor_value->un.magneticField.z;
+    return _sensor_value->un.magneticField.z;
 }
 
-//Return the mag component
+// Return the mag component
 uint8_t BNO08x::getMagAccuracy()
 {
-	return _sensor_value->status;
+    return _sensor_value->status;
 }
 
 // Return Gyro Integrated Rotation Vector i
 float BNO08x::getGyroIntegratedRVI()
 {
-	return _sensor_value->un.gyroIntegratedRV.i;
+    return _sensor_value->un.gyroIntegratedRV.i;
 }
 
 // Return Gyro Integrated Rotation Vector j
 float BNO08x::getGyroIntegratedRVJ()
 {
-	return _sensor_value->un.gyroIntegratedRV.j;
+    return _sensor_value->un.gyroIntegratedRV.j;
 }
 
 // Return Gyro Integrated Rotation Vector k
 float BNO08x::getGyroIntegratedRVK()
 {
-	return _sensor_value->un.gyroIntegratedRV.k;
+    return _sensor_value->un.gyroIntegratedRV.k;
 }
 
 // Return Gyro Integrated Rotation Vector real
 float BNO08x::getGyroIntegratedRVReal()
 {
-	return _sensor_value->un.gyroIntegratedRV.real;
+    return _sensor_value->un.gyroIntegratedRV.real;
 }
 
 // Return Gyro Integrated Rotation Vector angVelX
 float BNO08x::getGyroIntegratedRVangVelX()
 {
-	return _sensor_value->un.gyroIntegratedRV.angVelX;
+    return _sensor_value->un.gyroIntegratedRV.angVelX;
 }
 
 // Return Gyro Integrated Rotation Vector angVelY
 float BNO08x::getGyroIntegratedRVangVelY()
 {
-	return _sensor_value->un.gyroIntegratedRV.angVelY;
+    return _sensor_value->un.gyroIntegratedRV.angVelY;
 }
 
 // Return Gyro Integrated Rotation Vector angVelZ
 float BNO08x::getGyroIntegratedRVangVelZ()
 {
-	return _sensor_value->un.gyroIntegratedRV.angVelZ;
+    return _sensor_value->un.gyroIntegratedRV.angVelZ;
 }
 
-//Return the tap detector
+// Return the tap detector
 uint8_t BNO08x::getTapDetector()
 {
-	uint8_t previousTapDetector = tapDetector;
-	tapDetector = 0; //Reset so user code sees exactly one tap
-	return (previousTapDetector);
+    uint8_t previousTapDetector = tapDetector;
+    tapDetector = 0; // Reset so user code sees exactly one tap
+    return (previousTapDetector);
 }
 
-//Return the step count
+// Return the step count
 uint16_t BNO08x::getStepCount()
 {
-	return _sensor_value->un.stepCounter.steps;
+    return _sensor_value->un.stepCounter.steps;
 }
 
-//Return the stability classifier
+// Return the stability classifier
 uint8_t BNO08x::getStabilityClassifier()
 {
-	return _sensor_value->un.stabilityClassifier.classification;
+    return _sensor_value->un.stabilityClassifier.classification;
 }
 
-//Return the activity classifier
+// Return the activity classifier
 uint8_t BNO08x::getActivityClassifier()
 {
-	return _sensor_value->un.personalActivityClassifier.mostLikelyState;
+    return _sensor_value->un.personalActivityClassifier.mostLikelyState;
 }
 
-//Return the activity confindence
+// Return the activity confindence
 uint8_t BNO08x::getActivityConfidence(uint8_t activity)
 {
-	return _sensor_value->un.personalActivityClassifier.confidence[activity];
+    return _sensor_value->un.personalActivityClassifier.confidence[activity];
 }
 
-//Return the time stamp
+// Return the time stamp
 uint64_t BNO08x::getTimeStamp()
 {
-	return _sensor_value->timestamp;
+    return _sensor_value->timestamp;
 }
 
-//Return raw mems value for the accel
+// Return raw mems value for the accel
 int16_t BNO08x::getRawAccelX()
 {
-	return _sensor_value->un.rawAccelerometer.x;
+    return _sensor_value->un.rawAccelerometer.x;
 }
-//Return raw mems value for the accel
+// Return raw mems value for the accel
 int16_t BNO08x::getRawAccelY()
 {
-	return _sensor_value->un.rawAccelerometer.y;
+    return _sensor_value->un.rawAccelerometer.y;
 }
-//Return raw mems value for the accel
+// Return raw mems value for the accel
 int16_t BNO08x::getRawAccelZ()
 {
-	return _sensor_value->un.rawAccelerometer.z;
+    return _sensor_value->un.rawAccelerometer.z;
 }
 
-//Return raw mems value for the gyro
+// Return raw mems value for the gyro
 int16_t BNO08x::getRawGyroX()
 {
-	return _sensor_value->un.rawGyroscope.x;
+    return _sensor_value->un.rawGyroscope.x;
 }
 int16_t BNO08x::getRawGyroY()
 {
-	return _sensor_value->un.rawGyroscope.y;
+    return _sensor_value->un.rawGyroscope.y;
 }
 int16_t BNO08x::getRawGyroZ()
 {
-	return _sensor_value->un.rawGyroscope.z;
+    return _sensor_value->un.rawGyroscope.z;
 }
 
-//Return raw mems value for the mag
+// Return raw mems value for the mag
 int16_t BNO08x::getRawMagX()
 {
-	return _sensor_value->un.rawMagnetometer.x;
+    return _sensor_value->un.rawMagnetometer.x;
 }
 int16_t BNO08x::getRawMagY()
 {
-	return _sensor_value->un.rawMagnetometer.y;
+    return _sensor_value->un.rawMagnetometer.y;
 }
 int16_t BNO08x::getRawMagZ()
 {
-	return _sensor_value->un.rawMagnetometer.z;
+    return _sensor_value->un.rawMagnetometer.z;
 }
 
 // //Given a record ID, read the Q1 value from the metaData record in the FRS (ya, it's complicated)
@@ -648,245 +652,252 @@ int16_t BNO08x::getRawMagZ()
 
 bool BNO08x::serviceBus(void)
 {
-  sh2_service();
-  return true;
+    sh2_service();
+    return true;
 }
 
-//Send command to reset IC
+// Send command to reset IC
 bool BNO08x::softReset(void)
 {
-  int status = sh2_devReset();
+    int status = sh2_devReset();
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;	
+    return true;
 }
 
-//Set the operating mode to "On"
+// Set the operating mode to "On"
 //(This one is for @jerabaul29)
 bool BNO08x::modeOn(void)
 {
-  int status = sh2_devOn();
+    int status = sh2_devOn();
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;	
+    return true;
 }
 
-//Set the operating mode to "Sleep"
+// Set the operating mode to "Sleep"
 //(This one is for @jerabaul29)
 bool BNO08x::modeSleep(void)
 {
-  int status = sh2_devSleep();
+    int status = sh2_devSleep();
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;	
+    return true;
 }
 
-//Get the reason for the last reset
-//1 = POR, 2 = Internal reset, 3 = Watchdog, 4 = External reset, 5 = Other
+// Get the reason for the last reset
+// 1 = POR, 2 = Internal reset, 3 = Watchdog, 4 = External reset, 5 = Other
 uint8_t BNO08x::getResetReason()
 {
-	return prodIds.entry[0].resetCause;
+    return prodIds.entry[0].resetCause;
 }
 
-//Given a register value and a Q point, convert to float
-//See https://en.wikipedia.org/wiki/Q_(number_format)
+// Given a register value and a Q point, convert to float
+// See https://en.wikipedia.org/wiki/Q_(number_format)
 float BNO08x::qToFloat(int16_t fixedPointValue, uint8_t qPoint)
 {
 
-	float qFloat = fixedPointValue;
-	qFloat *= powf(2.0f, qPoint * -1.0f);
-	return (qFloat);
+    float qFloat = fixedPointValue;
+    qFloat *= powf(2.0f, qPoint * -1.0f);
+    return (qFloat);
 }
 
-//Sends the packet to enable the rotation vector
+// Sends the packet to enable the rotation vector
 bool BNO08x::enableRotationVector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SH2_ROTATION_VECTOR, timeBetweenReports);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SH2_ROTATION_VECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the geomagnetic rotation vector
+// Sends the packet to enable the geomagnetic rotation vector
 bool BNO08x::enableGeomagneticRotationVector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SH2_GEOMAGNETIC_ROTATION_VECTOR, timeBetweenReports);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SH2_GEOMAGNETIC_ROTATION_VECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the ar/vr stabilized rotation vector
+// Sends the packet to enable the ar/vr stabilized rotation vector
 bool BNO08x::enableARVRStabilizedRotationVector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR, timeBetweenReports);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_AR_VR_STABILIZED_ROTATION_VECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the rotation vector
+// Sends the packet to enable the rotation vector
 bool BNO08x::enableGameRotationVector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SH2_GAME_ROTATION_VECTOR, timeBetweenReports);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SH2_GAME_ROTATION_VECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the ar/vr stabilized rotation vector
+// Sends the packet to enable the ar/vr stabilized rotation vector
 bool BNO08x::enableARVRStabilizedGameRotationVector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR, timeBetweenReports);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_AR_VR_STABILIZED_GAME_ROTATION_VECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the accelerometer
+// Sends the packet to enable the accelerometer
 bool BNO08x::enableAccelerometer(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SH2_ACCELEROMETER, timeBetweenReports);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SH2_ACCELEROMETER, timeBetweenReports);
 }
 
-//Sends the packet to enable the accelerometer
+// Sends the packet to enable the accelerometer
 bool BNO08x::enableLinearAccelerometer(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_LINEAR_ACCELERATION, timeBetweenReports);	
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_LINEAR_ACCELERATION, timeBetweenReports);
 }
 
-//Sends the packet to enable the gravity vector
+// Sends the packet to enable the gravity vector
 bool BNO08x::enableGravity(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_GRAVITY, timeBetweenReports);	
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_GRAVITY, timeBetweenReports);
 }
 
-//Sends the packet to enable the gyro
+// Sends the packet to enable the gyro
 bool BNO08x::enableGyro(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_GYROSCOPE_CALIBRATED, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_GYROSCOPE_CALIBRATED, timeBetweenReports);
 }
 
-//Sends the packet to enable the uncalibrated gyro
+// Sends the packet to enable the uncalibrated gyro
 bool BNO08x::enableUncalibratedGyro(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_UNCALIBRATED_GYRO, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_UNCALIBRATED_GYRO, timeBetweenReports);
 }
 
-//Sends the packet to enable the magnetometer
+// Sends the packet to enable the magnetometer
 bool BNO08x::enableMagnetometer(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_MAGNETIC_FIELD, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_MAGNETIC_FIELD, timeBetweenReports);
 }
 
-//Sends the packet to enable the high refresh-rate gyro-integrated rotation vector
+// Sends the packet to enable the high refresh-rate gyro-integrated rotation vector
 bool BNO08x::enableGyroIntegratedRotationVector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_GYRO_INTEGRATED_ROTATION_VECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the tap detector
+// Sends the packet to enable the tap detector
 bool BNO08x::enableTapDetector(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_TAP_DETECTOR, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_TAP_DETECTOR, timeBetweenReports);
 }
 
-//Sends the packet to enable the step counter
+// Sends the packet to enable the step counter
 bool BNO08x::enableStepCounter(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_STEP_COUNTER, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_STEP_COUNTER, timeBetweenReports);
 }
 
-//Sends the packet to enable the Stability Classifier
+// Sends the packet to enable the Stability Classifier
 bool BNO08x::enableStabilityClassifier(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_STABILITY_CLASSIFIER, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_STABILITY_CLASSIFIER, timeBetweenReports);
 }
 
-//Sends the packet to enable the raw accel readings
-//Note you must enable basic reporting on the sensor as well
+// Sends the packet to enable the raw accel readings
+// Note you must enable basic reporting on the sensor as well
 bool BNO08x::enableRawAccelerometer(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_RAW_ACCELEROMETER, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_RAW_ACCELEROMETER, timeBetweenReports);
 }
 
-//Sends the packet to enable the raw accel readings
-//Note you must enable basic reporting on the sensor as well
+// Sends the packet to enable the raw accel readings
+// Note you must enable basic reporting on the sensor as well
 bool BNO08x::enableRawGyro(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_RAW_GYROSCOPE, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_RAW_GYROSCOPE, timeBetweenReports);
 }
 
-//Sends the packet to enable the raw accel readings
-//Note you must enable basic reporting on the sensor as well
+// Sends the packet to enable the raw accel readings
+// Note you must enable basic reporting on the sensor as well
 bool BNO08x::enableRawMagnetometer(uint16_t timeBetweenReports)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_RAW_MAGNETOMETER, timeBetweenReports);		
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_RAW_MAGNETOMETER, timeBetweenReports);
 }
 
-//Sends the packet to enable the various activity classifiers
+// Sends the packet to enable the various activity classifiers
 bool BNO08x::enableActivityClassifier(uint16_t timeBetweenReports, uint32_t activitiesToEnable)
 {
-	timeBetweenReports  = timeBetweenReports * 1000; // ms to us
-	return enableReport(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
+    timeBetweenReports = timeBetweenReports * 1000; // ms to us
+    return enableReport(SENSOR_REPORTID_PERSONAL_ACTIVITY_CLASSIFIER, timeBetweenReports, activitiesToEnable);
 }
 
 // See 2.2 of the Calibration Procedure document 1000-4044
 // Set the desired sensors to have active dynamic calibration
 bool BNO08x::setCalibrationConfig(uint8_t sensors)
 {
-  int status = sh2_setCalConfig(sensors);
+    int status = sh2_setCalConfig(sensors);
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;	
+    return true;
 }
 
 bool BNO08x::tareNow(bool zAxis, sh2_TareBasis_t basis)
 {
-  int status = sh2_setTareNow(zAxis ? TARE_AXIS_Z : TARE_AXIS_ALL, basis);
+    int status = sh2_setTareNow(zAxis ? TARE_AXIS_Z : TARE_AXIS_ALL, basis);
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;	
+    return true;
 }
 
 bool BNO08x::saveTare()
 {
-  int status = sh2_persistTare();
+    int status = sh2_persistTare();
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 bool BNO08x::clearTare()
 {
-  int status = sh2_clearTare();
+    int status = sh2_clearTare();
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 // //This tells the BNO08x to begin calibrating
@@ -955,43 +966,47 @@ bool BNO08x::clearTare()
 // 	sendCommand(COMMAND_ME_CALIBRATE);
 // }
 
-//This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
-//See page 49 of reference manual and the 1000-4044 calibration doc
+// This tells the BNO08x to save the Dynamic Calibration Data (DCD) to flash
+// See page 49 of reference manual and the 1000-4044 calibration doc
 bool BNO08x::saveCalibration()
 {
-  int status = sh2_saveDcdNow();
-  if (status != SH2_OK) {
-    return false;
-  }
-  return true;	
+    int status = sh2_saveDcdNow();
+    if (status != SH2_OK)
+    {
+        return false;
+    }
+    return true;
 }
 
 /*!  @brief Initializer for post i2c/spi init
  *   @param sensor_id Optional unique ID for the sensor set
  *   @returns True if chip identified and initialized
  */
-bool BNO08x::_init(int32_t sensor_id) {
-  int status;
+bool BNO08x::_init(int32_t sensor_id)
+{
+    int status;
 
-  hardwareReset();
+    hardwareReset();
 
-  // Open SH2 interface (also registers non-sensor event handler.)
-  status = sh2_open(&_HAL, hal_callback, NULL);
-  if (status != SH2_OK) {
-    return false;
-  }
+    // Open SH2 interface (also registers non-sensor event handler.)
+    status = sh2_open(&_HAL, hal_callback, NULL);
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  // Check connection partially by getting the product id's
-  memset(&prodIds, 0, sizeof(prodIds));
-  status = sh2_getProdIds(&prodIds);
-  if (status != SH2_OK) {
-    return false;
-  }
+    // Check connection partially by getting the product id's
+    memset(&prodIds, 0, sizeof(prodIds));
+    status = sh2_getProdIds(&prodIds);
+    if (status != SH2_OK)
+    {
+        return false;
+    }
 
-  // Register sensor listener
-  sh2_setSensorCallback(sensorHandler, NULL);
+    // Register sensor listener
+    sh2_setSensorCallback(sensorHandler, NULL);
 
-  return true;
+    return true;
 }
 
 /**
@@ -999,11 +1014,12 @@ bool BNO08x::_init(int32_t sensor_id) {
  *
  * @return true: a reset has occured false: no reset has occoured
  */
-bool BNO08x::wasReset(void) {
-  bool x = _reset_occurred;
-  _reset_occurred = false;
+bool BNO08x::wasReset(void)
+{
+    bool x = _reset_occurred;
+    _reset_occurred = false;
 
-  return x;
+    return x;
 }
 
 /**
@@ -1013,19 +1029,21 @@ bool BNO08x::wasReset(void) {
  * @return true: The report object was filled with a new report
  * @return false: No new report available to fill
  */
-bool BNO08x::getSensorEvent() {
-  _sensor_value = &sensorValue;
+bool BNO08x::getSensorEvent()
+{
+    _sensor_value = &sensorValue;
 
-  _sensor_value->timestamp = 0;
+    _sensor_value->timestamp = 0;
 
-  sh2_service();
+    sh2_service();
 
-  if (_sensor_value->timestamp == 0 && _sensor_value->sensorId != SH2_GYRO_INTEGRATED_RV) {
-    // no new events
-    return false;
-  }
+    if (_sensor_value->timestamp == 0 && _sensor_value->sensorId != SH2_GYRO_INTEGRATED_RV)
+    {
+        // no new events
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 /**
@@ -1039,33 +1057,37 @@ bool BNO08x::getSensorEvent() {
  * @return true: success false: failure
  */
 bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
-							   	   uint32_t sensorSpecific) {
-  static sh2_SensorConfig_t config;
+                          uint32_t sensorSpecific)
+{
+    static sh2_SensorConfig_t config;
 
-  // These sensor options are disabled or not used in most cases
-  config.changeSensitivityEnabled = false;
-  config.wakeupEnabled = false;
-  config.changeSensitivityRelative = false;
-  config.alwaysOnEnabled = false;
-  config.changeSensitivity = 0;
-  config.batchInterval_us = 0;
-  config.sensorSpecific = sensorSpecific;
+    // These sensor options are disabled or not used in most cases
+    config.changeSensitivityEnabled = false;
+    config.wakeupEnabled = false;
+    config.changeSensitivityRelative = false;
+    config.alwaysOnEnabled = false;
+    config.changeSensitivity = 0;
+    config.batchInterval_us = 0;
+    config.sensorSpecific = sensorSpecific;
 
-  config.reportInterval_us = interval_us;
+    config.reportInterval_us = interval_us;
 
-  if(_int_dev != NULL) {
-	if (!hal_wait_for_int()) {
-      return 0;
-  	}
-  }
-  
-  int status = sh2_setSensorConfig(sensorId, &config);
+    if (_int_dev != NULL)
+    {
+        if (!hal_wait_for_int())
+        {
+            return 0;
+        }
+    }
 
-  if (status != SH2_OK) {
-    return false;
-  }
+    int status = sh2_setSensorConfig(sensorId, &config);
 
-  return true;
+    if (status != SH2_OK)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /****************************************
@@ -1073,17 +1095,21 @@ bool BNO08x::enableReport(sh2_SensorId_t sensorId, uint32_t interval_us,
 *****************************************
 *****************************************/
 
-static int i2chal_open(sh2_Hal_t *self) {
-  // Serial.println("I2C HAL open");
+static int i2chal_open(sh2_Hal_t *self)
+{
+    // Serial.println("I2C HAL open");
 
-    if(_int_dev != NULL) hal_wait_for_int();
+    if (_int_dev != NULL)
+        hal_wait_for_int();
 
     uint8_t softreset_pkt[] = {5, 0, 1, 0, 1};
     bool success = false;
-    for (uint8_t attempts = 0; attempts < 5; attempts++) {
-        if (i2c_write_dt(_i2c_dev, softreset_pkt, 5) == 0) {
-        success = true;
-        break;
+    for (uint8_t attempts = 0; attempts < 5; attempts++)
+    {
+        if (i2c_write_dt(_i2c_dev, softreset_pkt, 5) == 0)
+        {
+            success = true;
+            break;
         }
         k_msleep(30);
     }
@@ -1093,20 +1119,25 @@ static int i2chal_open(sh2_Hal_t *self) {
     return 0;
 }
 
-static void i2chal_close(sh2_Hal_t *self) {
-  // Serial.println("I2C HAL close");
+static void i2chal_close(sh2_Hal_t *self)
+{
+    // Serial.println("I2C HAL close");
 }
 
 static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
-                       uint32_t *t_us) {
-    if(_int_dev != NULL) {
-        if (!hal_wait_for_int()) {
+                       uint32_t *t_us)
+{
+    if (_int_dev != NULL)
+    {
+        if (!hal_wait_for_int())
+        {
             return 0;
         }
     }
 
     uint8_t header[4];
-    if (i2c_read_dt(_i2c_dev, header, 4) != 0) {
+    if (i2c_read_dt(_i2c_dev, header, 4) != 0)
+    {
         return 0;
     }
 
@@ -1115,30 +1146,37 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len,
     // Unset the "continue" bit
     packet_size &= ~0x8000;
 
-    if (packet_size > len) {
+    if (packet_size > len)
+    {
         // packet wouldn't fit in our buffer
         return 0;
     }
 
-    if (_int_dev != NULL) {
-        if (!hal_wait_for_int()) return 0;
+    if (_int_dev != NULL)
+    {
+        if (!hal_wait_for_int())
+            return 0;
     }
 
-    if (i2c_read_dt(_i2c_dev, pBuffer, packet_size) != 0) {
+    if (i2c_read_dt(_i2c_dev, pBuffer, packet_size) != 0)
+    {
         return 0;
     }
 
     return packet_size;
 }
 
-static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
+static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len)
+{
+    /** #HACK: 注释后成功运行 */
     // if(_int_dev != NULL) {
     //     if (!hal_wait_for_int()) {
     //         return 0;
     //     }
     // }
 
-    if (i2c_write_dt(_i2c_dev, pBuffer, len) != 0) {
+    if (i2c_write_dt(_i2c_dev, pBuffer, len) != 0)
+    {
         return 0;
     }
 
@@ -1150,8 +1188,10 @@ static int i2chal_write(sh2_Hal_t *self, uint8_t *pBuffer, unsigned len) {
 *****************************************
 *****************************************/
 
-static void hal_hardwareReset(void) {
-    if (_rst_dev != NULL) {
+static void hal_hardwareReset(void)
+{
+    if (_rst_dev != NULL)
+    {
         gpio_pin_set_dt(_rst_dev, 0); // 释放复位
         k_msleep(10);
         gpio_pin_set_dt(_rst_dev, 1); // 激活ACTIVE_LOW
@@ -1161,30 +1201,35 @@ static void hal_hardwareReset(void) {
     }
 }
 
-static uint32_t hal_getTimeUs(sh2_Hal_t *self) {
+static uint32_t hal_getTimeUs(sh2_Hal_t *self)
+{
     uint32_t t = k_ticks_to_us_floor32(k_uptime_ticks());
     // Serial.printf("I2C HAL get time: %d\n", t);
     return t;
 }
 
-static void hal_callback(void *cookie, sh2_AsyncEvent_t *pEvent) {
-  if (pEvent->eventId == SH2_RESET) {
-    _reset_occurred = true;
-  }
+static void hal_callback(void *cookie, sh2_AsyncEvent_t *pEvent)
+{
+    if (pEvent->eventId == SH2_RESET)
+    {
+        _reset_occurred = true;
+    }
 }
 
 // Handle sensor events.
-static void sensorHandler(void *cookie, sh2_SensorEvent_t *event) {
-  int rc;
+static void sensorHandler(void *cookie, sh2_SensorEvent_t *event)
+{
+    int rc;
 
-  // Serial.println("Got an event!");
+    // Serial.println("Got an event!");
 
-  rc = sh2_decodeSensorEvent(_sensor_value, event);
-  if (rc != SH2_OK) {
-    //Serial.println("BNO08x - Error decoding sensor event");
-    _sensor_value->timestamp = 0;
-    return;
-  }
+    rc = sh2_decodeSensorEvent(_sensor_value, event);
+    if (rc != SH2_OK)
+    {
+        // Serial.println("BNO08x - Error decoding sensor event");
+        _sensor_value->timestamp = 0;
+        return;
+    }
 }
 
 /**
@@ -1193,24 +1238,27 @@ static void sensorHandler(void *cookie, sh2_SensorEvent_t *event) {
  */
 void BNO08x::hardwareReset(void) { hal_hardwareReset(); }
 
-
-//Return the sensorID
+// Return the sensorID
 uint8_t BNO08x::getSensorEventID()
 {
-	return _sensor_value->sensorId;
+    return _sensor_value->sensorId;
 }
 
-
-//Returns true if I2C device ack's
-bool BNO08x::isConnected() {
+// Returns true if I2C device ack's
+bool BNO08x::isConnected()
+{
     return (i2c_write_dt(_i2c_dev, NULL, 0) == 0);
 }
 
-static bool hal_wait_for_int(void) {
-    if (_int_dev == NULL) return false;
+static bool hal_wait_for_int(void)
+{
+    if (_int_dev == NULL)
+        return false;
 
-    for (int i = 0; i < 500; i++) {
-        if (gpio_pin_get_dt(_int_dev) == 1) {
+    for (int i = 0; i < 500; i++)
+    {
+        if (gpio_pin_get_dt(_int_dev) == 1)
+        {
             return true;
         }
         k_msleep(1);

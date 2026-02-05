@@ -29,8 +29,8 @@ struct sensor_data_packet_t sensor_data =
 
 #if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
 /** mlx90393 */
-// const struct i2c_dt_spec mlx90393_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(mlx90393));
-// Mlx90393 mlx90393;
+const struct i2c_dt_spec mlx90393_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(mlx90393));
+Mlx90393 mlx90393;
 
 /** bno085 */
 const struct i2c_dt_spec bno085_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(bno085));
@@ -129,7 +129,6 @@ int main(void)
         LOG_ERR("ads122c04 configureADCmode failed!");
         return 0;
     }
-    k_msleep(1000);
 
     bsp_adc_init();
 
@@ -144,6 +143,8 @@ int main(void)
         k_sem_take(&k_timer_sem, K_FOREVER);
 
 #if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
+        // mlx90393.readMeasurement(&x, &y, &z);
+
         if (bno085.wasReset())
         {
             LOG_INF("bno085 was reset"); 
@@ -167,9 +168,9 @@ int main(void)
         }
 
         float milvol = ads122c04.readBridgeVoltage();
-        LOG_INF("Bridge voltage: %f", milvol * 1000.0f);
-        bsp_adc_read_channels();  /* 166 us */
+        LOG_INF("Bridge volt (uV): %f", milvol * 1000.0f);
 
+        bsp_adc_read_channels();  /* 166 us */
         tx_payload.data[0] = THIS_NODE_ID;
         memcpy(tx_payload.data + 1, &mV_ain0, sizeof(mV_ain0));
         memcpy(tx_payload.data + 1 + sizeof(mV_ain0), &mV_ain1, sizeof(mV_ain1));
