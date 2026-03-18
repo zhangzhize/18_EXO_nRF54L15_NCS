@@ -18,14 +18,38 @@
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
-struct sensor_data_packet_t sensor_data = 
+struct foot_sensor_packet_t foot_sensor_data =
 {
-    .data_type = kFoot_ADC,
-    .left_foot_adc_data = {0},
-    .right_foot_adc_data = {0},
-    .left_foot_imu_data = {0},
-    .right_foot_imu_data = {0},
-};
+    .mV_heel = 0,
+    .mV_toe = 0,
+    .mV_pull = 0,
+    .quatI = 0,
+    .quatJ = 0,
+    .quatK = 0,
+    .quatReal = 0,
+};  /** for LEFT_FOOT_NODE and RIGHT_FOOT_NODE */
+
+struct exo_sensor_packet_t exo_sensor_data =
+{
+    .left_foot = {
+        .mV_heel = 0,
+        .mV_toe = 0,
+        .mV_pull = 0,
+        .quatI = 0,
+        .quatJ = 0,
+        .quatK = 0,
+        .quatReal = 0,
+    },
+    .right_foot = {
+        .mV_heel = 0,
+        .mV_toe = 0,
+        .mV_pull = 0,
+        .quatI = 0,
+        .quatJ = 0,
+        .quatK = 0,
+        .quatReal = 0,
+    },
+};  /** for STM32H7_NODE */
 
 #if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
 /** mlx90393 */
@@ -109,27 +133,6 @@ int main(void)
     //     return 0;
     // }
 
-    if (!bno085.begin(&bno085_i2c, &bno085_intn, &bno085_nrst))
-    {
-        LOG_ERR("bno085 begin failed!");
-        return 0;
-    }
-    if (!bno085.enableRotationVector(100))
-    {
-        LOG_ERR("bno085 rotation vector enable failed!");
-    }
-
-    if (!ads122c04.begin(&ads122c04_i2c, &ads122c04_drdy))
-    {
-        LOG_ERR("ads122c04 begin failed!");
-        return 0;
-    }
-    if (!ads122c04.configureADCmode(ADS122C04_BRIDGE_MODE, ADS122C04_DATA_RATE_90SPS))
-    {
-        LOG_ERR("ads122c04 configureADCmode failed!");
-        return 0;
-    }
-
     bsp_adc_init();
 
 #endif
@@ -145,36 +148,12 @@ int main(void)
 #if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
         // mlx90393.readMeasurement(&x, &y, &z);
 
-        if (bno085.wasReset())
-        {
-            LOG_INF("bno085 was reset"); 
-            if (!bno085.enableRotationVector(100))
-            {
-                LOG_ERR("bno085 rotation vector enable failed!");
-            }
-        }
-        if (bno085.getSensorEvent())
-        {
-            if (bno085.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR)
-            {
-                float quatI = bno085.getQuatI();
-                float quatJ = bno085.getQuatJ();
-                float quatK = bno085.getQuatK();
-                float quatReal = bno085.getQuatReal();
-                float quatRadianAccuracy = bno085.getQuatRadianAccuracy();
-
-                LOG_INF("quatI: %f, quatJ: %f, quatK: %f, quatReal: %f, quatRadianAccuracy: %f", quatI, quatJ, quatK, quatReal, quatRadianAccuracy);
-            }
-        }
-
-        float milvol = ads122c04.readBridgeVoltage();
-        LOG_INF("Bridge volt (uV): %f", milvol * 1000.0f);
-
         bsp_adc_read_channels();  /* 166 us */
+        LOG_INF("mV_heel (mV): %d, mV_toe (mV): %d", foot_sensor_data.mV_heel, foot_sensor_data.mV_toe);
+
         tx_payload.data[0] = THIS_NODE_ID;
-        memcpy(tx_payload.data + 1, &mV_ain0, sizeof(mV_ain0));
-        memcpy(tx_payload.data + 1 + sizeof(mV_ain0), &mV_ain1, sizeof(mV_ain1));
-        tx_payload.length = 1 + sizeof(mV_ain0) + sizeof(mV_ain1);
+        memcpy(tx_payload.data + 1, &foot_sensor_data, sizeof(foot_sensor_data));
+        tx_payload.length = 1 + sizeof(foot_sensor_data);
         tx_payload.noack = false;
         if (ready)
         {
@@ -189,17 +168,85 @@ int main(void)
         }
 
 #elif (THIS_NODE_ID == STM32H7_NODE_ID)
-        if (sensor_data.data_type == kFoot_ADC)
-        {
-            app_uart_tx(reinterpret_cast<const uint8_t*>(&sensor_data), 1 + 2 * 8);
-        }
-        else if (sensor_data.data_type == kFoot_ADC_IMU)
-        {
-            app_uart_tx(reinterpret_cast<const uint8_t*>(&sensor_data), 1 + 2 * 8 + 2 * 12);
-        }
+        app_uart_tx(reinterpret_cast<const uint8_t*>(&exo_sensor_data), sizeof(exo_sensor_data));
+
 #endif
 
     } // while (1)
 
     return 0;
 }
+
+#if (THIS_NODE_ID == LEFT_FOOT_NODE_ID) || (THIS_NODE_ID == RIGHT_FOOT_NODE_ID)
+
+#define BNO_THREAD_STACKSIZE 2048
+#define BNO_THREAD_PRIORITY  5
+#define ADS_THREAD_STACKSIZE 1024
+#define ADS_THREAD_PRIORITY  6
+
+void bno085_thread(void *p1, void *p2, void *p3)
+{
+    LOG_INF("Initializing BNO085...");
+    if (!bno085.begin(&bno085_i2c, &bno085_intn, &bno085_nrst))
+    {
+        LOG_ERR("bno085 begin failed!");
+        return;
+    }
+    if (!bno085.enableRotationVector(10))
+    {
+        LOG_ERR("bno085 rotation vector enable failed!");
+        // return;
+    }
+    while (1)
+    {
+        if (bno085.wasReset())
+        {
+            LOG_INF("bno085 was reset"); 
+            if (!bno085.enableRotationVector(10))
+            {
+                LOG_ERR("bno085 rotation vector enable failed!");
+            }
+        }
+        if (bno085.getSensorEvent())
+        {
+            if (bno085.getSensorEventID() == SENSOR_REPORTID_ROTATION_VECTOR)
+            {
+                foot_sensor_data.quatI = bno085.getQuatI();
+                foot_sensor_data.quatJ = bno085.getQuatJ();
+                foot_sensor_data.quatK = bno085.getQuatK();
+                foot_sensor_data.quatReal = bno085.getQuatReal();
+                // float quatRadianAccuracy = bno085.getQuatRadianAccuracy();
+                LOG_INF("quatI: %f, quatJ: %f, quatK: %f, quatReal: %f", foot_sensor_data.quatI, foot_sensor_data.quatJ, foot_sensor_data.quatK, foot_sensor_data.quatReal);
+            }
+        }
+    }
+}
+K_THREAD_DEFINE(bno_thread_id, BNO_THREAD_STACKSIZE, bno085_thread, NULL, NULL, NULL, BNO_THREAD_PRIORITY, 0, 0);
+
+void ads122c04_thread(void *p1, void *p2, void *p3)
+{
+    LOG_INF("Initializing ADS122C04...");
+    if (!ads122c04.begin(&ads122c04_i2c, &ads122c04_drdy))
+    {
+        LOG_ERR("ads122c04 begin failed!");
+        return;
+    }
+    if (!ads122c04.configureADCmode(ADS122C04_BRIDGE_MODE, ADS122C04_DATA_RATE_175SPS))
+    {
+        LOG_ERR("ads122c04 configureADCmode failed!");
+        return;
+    }
+    ads122c04.setConversionMode(ADS122C04_CONVERSION_MODE_CONTINUOUS);
+    ads122c04.start();
+
+    LOG_INF("ads122c04 Started in Continuous Mode.");
+
+    while (1)
+    {
+        foot_sensor_data.mV_pull = ads122c04.readBridgeMilliVolts();
+        LOG_INF("Bridge volt (uV): %f", foot_sensor_data.mV_pull * 1000.0f);
+    }
+}
+K_THREAD_DEFINE(ads_thread_id, ADS_THREAD_STACKSIZE, ads122c04_thread, NULL, NULL, NULL, ADS_THREAD_PRIORITY, 0, 0);
+
+#endif

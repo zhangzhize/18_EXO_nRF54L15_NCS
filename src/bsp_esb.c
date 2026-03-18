@@ -47,27 +47,15 @@ static void event_handler(struct esb_evt const *event)
         while (esb_read_rx_payload(&rx_payload) == 0)
         {
 #if (THIS_NODE_ID == STM32H7_NODE_ID)
-            if (rx_payload.length >= 1 + 2 * 4)
+            if (rx_payload.length == 1 + sizeof(foot_sensor_packet_t))
             {
                 if (rx_payload.data[0] == LEFT_FOOT_NODE_ID)
                 {
-                    memcpy(sensor_data.left_foot_adc_data, &rx_payload.data[1], 8);
+                    memcpy(&exo_sensor_data.left_foot, rx_payload.data + 1, sizeof(foot_sensor_packet_t));
                 }
                 else if (rx_payload.data[0] == RIGHT_FOOT_NODE_ID)
                 {
-                    memcpy(sensor_data.right_foot_adc_data, &rx_payload.data[1], 8);
-                }
-            }
-            
-            if (rx_payload.length >= 1 + 2 * 4 + 12)
-            {
-                if (rx_payload.data[0] == LEFT_FOOT_NODE_ID)
-                {
-                    memcpy(sensor_data.left_foot_imu_data, &rx_payload.data[1 + 2 * 4], 12);
-                }
-                else if (rx_payload.data[0] == RIGHT_FOOT_NODE_ID)
-                {
-                    memcpy(sensor_data.right_foot_imu_data, &rx_payload.data[1 + 2 * 4], 12);
+                    memcpy(&exo_sensor_data.right_foot, rx_payload.data + 1, sizeof(foot_sensor_packet_t));
                 }
             }
 
@@ -76,7 +64,6 @@ static void event_handler(struct esb_evt const *event)
             {
                 led_toggle_cnt = 0;
                 bsp_led_toggle();
-                // printk("RX from node %d\r\n", rx_payload.data[0]);
             }
 
 #endif

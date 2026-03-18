@@ -44,6 +44,15 @@
 #include <string.h>
 #include <math.h>
 
+/** added by zzz */
+const bool _use_int_sem = true;
+struct gpio_callback _int_cb_data;
+struct k_sem _int_sem;
+static void bno_int_isr_handler(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+    k_sem_give(&_int_sem);
+}
+
 static const struct i2c_dt_spec *_i2c_dev = NULL;
 static const struct gpio_dt_spec *_int_dev = NULL;
 static const struct gpio_dt_spec *_rst_dev = NULL;
@@ -85,6 +94,18 @@ bool BNO08x::begin(const struct i2c_dt_spec *i2c_dev,
         if (!device_is_ready(_int_dev->port))
             return false;
         gpio_pin_configure_dt(_int_dev, GPIO_INPUT);
+
+        /** added by zzz */
+        if (_use_int_sem)
+        {
+            k_sem_init(&_int_sem, 0, 1);
+            if (gpio_pin_interrupt_configure_dt(_int_dev, GPIO_INT_EDGE_TO_ACTIVE) != 0)
+            {
+                return false;
+            }
+            gpio_init_callback(&_int_cb_data, bno_int_isr_handler, BIT(_int_dev->pin));
+            gpio_add_callback(_int_dev->port, &_int_cb_data);
+        }
     }
 
     if (_int_dev != NULL)
@@ -1255,15 +1276,32 @@ static bool hal_wait_for_int(void)
     if (_int_dev == NULL)
         return false;
 
-    for (int i = 0; i < 500; i++)
+    if (gpio_pin_get_dt(_int_dev) == 1) {
+        if (_use_int_sem) {
+            k_sem_reset(&_int_sem);
+        }
+        return true;
+    }
+
+    if (_use_int_sem)
     {
-        if (gpio_pin_get_dt(_int_dev) == 1)
+        if (k_sem_take(&_int_sem, K_MSEC(BNO08x_CONVERSION_TIMEOUT)) == 0)
         {
             return true;
         }
-        k_msleep(1);
     }
-    hal_hardwareReset();
+    else
+    {
+        for (int i = 0; i < BNO08x_CONVERSION_TIMEOUT; i++)
+        {
+            if (gpio_pin_get_dt(_int_dev) == 1)
+            {
+                return true;
+            }
+            k_msleep(1);
+        }
+    }
 
+    hal_hardwareReset();
     return false;
 }

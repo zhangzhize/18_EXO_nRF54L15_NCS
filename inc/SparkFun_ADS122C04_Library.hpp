@@ -310,7 +310,7 @@ public:
 
     float readPT100Centigrade(void); // Read the PT100 temperature in Centigrade
     float readPT100Fahrenheit(void); // Read the PT100 temperature in Fahrenheit
-    float readBridgeVoltage(void);     // Read the bridge voltage in Volts
+    float readBridgeMilliVolts(void);     // Read the bridge voltage in Volts
     
     // Read the raw signed 24-bit ADC value as int32_t
     // This uses the internal 2.048V reference with the gain set to 1
@@ -369,6 +369,7 @@ public:
 
     struct gpio_callback drdy_cb_data;
     struct k_sem data_ready_sem;
+    static void drdy_isr_handler(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
 
 private:
     // Variables
@@ -391,8 +392,7 @@ private:
     const float TEMPERATURE_SENSOR_RESOLUTION = 0.03125;
 
     ADS122C04Reg_t ADS122C04_Reg; // Global to hold copies of all four configuration registers
-
-    static void drdy_isr_handler(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
+    
     bool wait_for_data(void);
 
     bool ADS122C04_init(ADS122C04_initParam *param); // initialise the ADS122C04 with these parameters

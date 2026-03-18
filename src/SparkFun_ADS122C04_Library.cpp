@@ -40,11 +40,7 @@
 #include "SparkFun_ADS122C04_Library.hpp"
 #include "math.h"
 
-SFE_ADS122C04::SFE_ADS122C04(void)
-{
-    // Constructor
-    k_sem_init(&data_ready_sem, 0, 1);
-}
+SFE_ADS122C04::SFE_ADS122C04(void) { }
 
 // Attempt communication with the device and initialise it
 // Return true if successful
@@ -67,6 +63,8 @@ bool SFE_ADS122C04::begin(const struct i2c_dt_spec *i2c_dev, const struct gpio_d
         {
             return false;
         }
+
+        k_sem_init(&data_ready_sem, 0, 1);
         if (gpio_pin_interrupt_configure_dt(_drdy_gpio, GPIO_INT_EDGE_TO_ACTIVE) != 0)
         {
             return false;
@@ -242,7 +240,7 @@ bool SFE_ADS122C04::configureADCmode(uint8_t wire_mode, uint8_t rate)
         initParams.gainLevel = ADS122C04_GAIN_128;                   // Set the gain to 128
         initParams.pgaBypass = ADS122C04_PGA_ENABLED;                // The PGA must be enabled for gains >= 8
         initParams.dataRate = rate;                                  // Set the data rate (samples per second). Defaults to 20
-        initParams.opMode = ADS122C04_OP_MODE_TURBO;                 // Enable turbo mode
+        initParams.opMode = ADS122C04_OP_MODE_NORMAL;                 // Enable turbo mode
         initParams.convMode = ADS122C04_CONVERSION_MODE_SINGLE_SHOT; // Use single shot mode
         initParams.selectVref = ADS122C04_VREF_AVDD;                 // Use AVDD as the reference
         initParams.tempSensorEn = ADS122C04_TEMP_SENSOR_OFF;         // Disable the temperature sensor
@@ -357,15 +355,16 @@ float SFE_ADS122C04::readPT100Fahrenheit(void) // Read the temperature in Fahren
     return ((readPT100Centigrade() * 1.8f) + 32.0f); // Read Centigrade and convert to Fahrenheit
 }
 
-float SFE_ADS122C04::readBridgeVoltage(void) // Read the bridge voltage in Volts
+float SFE_ADS122C04::readBridgeMilliVolts(void) // Read the bridge voltage in mV
 {
     raw_voltage_union raw_v; // union to convert uint32_t to int32_t
     float ret_val = 0.0;     // Return value
 
-    const float ADS122C04_AVDD_VOLT = 3.0f; // AVDD voltage in Volts
+    const float ADS122C04_AVDD_VOLT = 3.3f; // AVDD voltage in Volts
 
     // Start the conversion (assumes we are using single shot mode)
-    start();
+    // zzz: now assumes continuous mode
+    // start();
 
     // Wait for DRDY to go valid
     if (!wait_for_data())
@@ -777,15 +776,10 @@ bool SFE_ADS122C04::wait_for_data(void)
         {
             return true;
         }
-        else
-        {
-            return false;
-        }
     }
     else
     {
-        int64_t start_time = k_uptime_get();
-        while (k_uptime_get() - start_time < ADS122C04_CONVERSION_TIMEOUT)
+        for (int i = 0; i < ADS122C04_CONVERSION_TIMEOUT; i++)
         {
             if (checkDataReady())
             {
@@ -793,8 +787,8 @@ bool SFE_ADS122C04::wait_for_data(void)
             }
             k_msleep(1);
         }
-        return false;
     }
+    return false;
 }
 
 // Update ADS122C04_Reg and initialise the ADS122C04 using the supplied parameters

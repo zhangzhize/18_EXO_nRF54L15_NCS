@@ -10,9 +10,6 @@ LOG_MODULE_REGISTER(bsp_adc, LOG_LEVEL_ERR);
 const struct adc_dt_spec adc_ain0 = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 const struct adc_dt_spec adc_ain1 = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 1);
 
-int32_t mV_ain0;
-int32_t mV_ain1;
-
 void bsp_adc_init(void)
 {
     int err;
@@ -42,8 +39,8 @@ void bsp_adc_init(void)
 
 void bsp_adc_read_channels(void)
 {
-    bsp_adc_read_mV(&adc_ain0, &mV_ain0);
-    bsp_adc_read_mV(&adc_ain1, &mV_ain1);
+    bsp_adc_read_mV(&adc_ain0, &foot_sensor_data.mV_heel);
+    bsp_adc_read_mV(&adc_ain1, &foot_sensor_data.mV_toe);
 }
 
 int bsp_adc_read_mV(const struct adc_dt_spec *adc, int32_t *raw)

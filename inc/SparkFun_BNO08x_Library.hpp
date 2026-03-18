@@ -54,6 +54,7 @@
 //The default I2C address for the BNO08x on the SparkFun breakout is 0x4B. 0x4A is also possible.
 #define BNO08x_DEFAULT_ADDRESS 0x4B
 
+#define BNO08x_CONVERSION_TIMEOUT 500
 //All the ways we can configure or talk to the BNO08x, figure 34, page 36 reference manual
 //These are used for low level communication with the sensor, on channel 2
 #define SHTP_REPORT_COMMAND_RESPONSE 0xF1

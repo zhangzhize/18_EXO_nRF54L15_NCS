@@ -18,9 +18,9 @@ void bsp_led_init(void)
         return;
     }
 
-    gpio_pin_set_dt(&led, 1);
+    bsp_led_on();
     k_sleep(K_MSEC(1000));
-    gpio_pin_set_dt(&led, 0);
+    bsp_led_off();
 }
 
 void bsp_led_toggle(void)
@@ -35,7 +35,7 @@ void bsp_led_toggle(void)
 
 void bsp_led_on(void)
 {
-        if (!device_is_ready(led.port))
+    if (!device_is_ready(led.port))
     {
         return;
     }

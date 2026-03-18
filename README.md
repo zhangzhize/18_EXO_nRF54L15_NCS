@@ -1,1 +1,1 @@
-Some codes.
+Some codes. NCS toolchain & SDK @3.1.0.
