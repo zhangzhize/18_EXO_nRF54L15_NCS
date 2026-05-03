@@ -20,19 +20,18 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bsp_esb, LOG_LEVEL_ERR);
 
-bool ready = true;
+volatile bool ready = true;
 struct esb_payload rx_payload;
 struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0x01, 0x01, 0x00, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
 
 static void event_handler(struct esb_evt const *event)
 {
-    ready = true;
-
     static int led_toggle_cnt = 0;
     switch (event->evt_id)
     {
     case ESB_EVENT_TX_SUCCESS:
-        LOG_DBG("TX SUCCESS EVENT");
+        LOG_INF("TX SUCCESS EVENT");
+        ready = true;
         led_toggle_cnt++;
         if (led_toggle_cnt >= 500)
         {
@@ -41,7 +40,8 @@ static void event_handler(struct esb_evt const *event)
         }
         break;
     case ESB_EVENT_TX_FAILED:
-        LOG_DBG("TX FAILED EVENT");
+        ready = true;
+        LOG_ERR("TX FAILED EVENT");
         break;
     case ESB_EVENT_RX_RECEIVED:
         while (esb_read_rx_payload(&rx_payload) == 0)
@@ -172,9 +172,8 @@ int esb_initialize(void)
 
     struct esb_config config = ESB_DEFAULT_CONFIG;
 
+    //zzz
     config.protocol = ESB_PROTOCOL_ESB_DPL;
-    config.retransmit_delay = 600; /* 600 us */
-    config.bitrate = ESB_BITRATE_4MBPS;
     config.event_handler = event_handler;
     /* set device role based on THIS_NODE_ID */
 #if THIS_NODE_ID == STM32H7_NODE_ID
@@ -187,9 +186,13 @@ int esb_initialize(void)
     {
         config.use_fast_ramp_up = true;
     }
+    config.crc = ESB_CRC_16BIT;
+    config.tx_output_power = 8;
+    config.retransmit_delay = 500; /* 500 us */
+    config.retransmit_count = 6;
+    config.bitrate = ESB_BITRATE_4MBPS;
 
     err = esb_init(&config);
-
     if (err)
     {
         return err;

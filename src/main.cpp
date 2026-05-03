@@ -16,7 +16,7 @@
 #include "app_uart.h"
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(main, LOG_LEVEL_WRN);
 
 struct foot_sensor_packet_t foot_sensor_data =
 {
@@ -165,6 +165,10 @@ int main(void)
             {
                 LOG_ERR("Payload write failed, err %d", err);
             }
+        }
+        else
+        {
+            LOG_ERR("Payload not ready");
         }
 
 #elif (THIS_NODE_ID == STM32H7_NODE_ID)

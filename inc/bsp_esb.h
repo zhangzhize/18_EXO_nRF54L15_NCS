@@ -14,7 +14,7 @@ extern "C" {
 #include <esb.h>
 
 #ifndef RF_CHANNEL
-#define RF_CHANNEL 20
+#define RF_CHANNEL 82
 #endif
 
 #define _RADIO_SHORTS_COMMON                                       \
@@ -22,7 +22,7 @@ extern "C" {
      RADIO_SHORTS_ADDRESS_RSSISTART_Msk |                          \
      RADIO_SHORTS_DISABLED_RSSISTOP_Msk)
 
-extern bool ready;
+extern volatile bool ready;
 extern struct esb_payload rx_payload;
 extern struct esb_payload tx_payload;
 
