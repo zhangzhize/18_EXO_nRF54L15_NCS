@@ -1,0 +1,8 @@
+# Copyright (c) 2020 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+description: STM32H7 SPI Receiver for Exoskeleton
+
+compatible: "stm32-slave"
+
+include: spi-device.yaml

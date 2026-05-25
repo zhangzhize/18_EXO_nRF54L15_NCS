@@ -1,0 +1,17 @@
+# dts/bindings/exo,ads1220.yaml
+
+description: Texas Instruments ADS1220 24-bit ADC for Exoskeleton Sensor Node
+
+compatible: "ads1220"
+
+# 核心继承：告诉 Zephyr 这是一个 SPI 设备，自动获得 reg 和 spi-max-frequency 等基础属性
+include: spi-device.yaml
+
+# 扩展属性：声明我们在这个设备上额外接了哪些专属硬件线
+properties:
+  drdy-gpios:
+    type: phandle-array
+    description: |
+      Data Ready (DRDY) interrupt pin. 
+      This pin is asserted low by the ADS1220 when a new conversion result is available.
+      Used to trigger the 1000Hz hardware data acquisition loop.
