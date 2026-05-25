@@ -1,3 +1,40 @@
+/**
+ * =================================================================================
+ * PINS                  MY BOARD                      XIAO NRF54L15 SENSE
+ * =================================================================================
+ * P0.00:                free                          USR_KEY
+ * P0.01:                ads1220a drdy                 IMU_3V3_EN 
+ * P0.02:                icm42688 drdy                 IMU_INT      
+ * P0.03:                                i2c30 SDL
+ * P0.04:                                i2c30 SDA
+ * =================================================================================
+ * P1.00 & P1.01:                        32.768KHZ crystal
+ * P1.02:                ads1220b cs                   NFC
+ * P1.03:                ads1220b drdy                 NFC
+ * P1.04 - P1.07:                        CH0/AIN0 - CH3/AIN3
+ * P1.08:                free                          UART20
+ * P1.09:                free                          UART20
+ * P1.10:                                i2c22 SDA
+ * P1.11:                                i2c22 SDL
+ * P1.12:                icm42688 spi cs               mic clk
+ * P1.13:                ads122c04 inin                mic data
+ * P1.14:                bno085 intn                   AIN7_BAT
+ * P1.15:                free                          VBAT_EN
+ * =================================================================================
+ * P2.00:                                 USR_LED
+ * P2.01:                                 spi00 sck
+ * P2.02:                                 spi00 mosi
+ * P2.03:                free                          rf_sw_pwr
+ * P2.04:                                 spi00 miso
+ * P2.05:                free                          rf_sw_ctl
+ * P2.06:                stm32_slave spi cs            free (D15)
+ * P2.07:                                 UART21
+ * P2.08:                                 UART21
+ * P2.09:                bno085 nrst                   free (D13)
+ * P2.10:                ads1220a spi cs               free (D13)
+ * =================================================================================
+ */
+
 / {
     zephyr,user {
         io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>;
@@ -16,16 +53,36 @@
 &pdm20 {
     status = "disabled";
 };
-
 /* 释放 P1.15 */
 &vbat_pwr {
     status = "disabled";
 };
-
-&spi00 {
+/* 释放 P0.01 */
+&pdm_imu_pwr {
     status = "disabled";
 };
-
+/* 释放 P1.02, P1.03 */
+&nfct {
+    status = "disabled";
+};
+&uicr {
+    nfct-pins-as-gpios;
+};
+/* 释放 P0.00 */
+&usr_btn {
+    status = "disabled";
+};
+/* 释放P1.08, P1.09 */
+/ {
+    chosen {
+        /delete-property/ zephyr,console;
+        /delete-property/ zephyr,shell-uart;
+        /delete-property/ nordic,rpc-uart;
+    };
+};
+&uart20 {
+    status = "disabled";
+};
 
 &i2c22 {
     status = "okay";
@@ -62,11 +119,33 @@
 
 &xiao_spi {
 	status = "okay";
-    cs-gpios = <&gpio2 6 GPIO_ACTIVE_LOW>;
+    compatible = "nordic,nrf-spim";
+    cs-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>, <&gpio2 6 GPIO_ACTIVE_LOW>, <&gpio2 10 GPIO_ACTIVE_LOW>, <&gpio1 2 GPIO_ACTIVE_LOW>;
     icm42688: icm42688@0 {
+        status = "disabled";
         compatible = "invensense,icm42688";
         reg = <0>;
-        spi-max-frequency = <24000000>;
-        int-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
+        spi-max-frequency = <16000000>;
+        int-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+    };
+    stm32_slave: stm32_slave@1 {
+        status = "okay";
+        compatible = "stm32-slave";
+        reg = <1>;
+        spi-max-frequency = <8000000>;
+    };
+    ads1220a: ads1220a@2 {
+        status = "okay";
+        compatible = "ads1220";
+        reg = <2>;
+        spi-max-frequency = <6400000>;
+        drdy-gpios = <&gpio0 1 GPIO_ACTIVE_LOW>;
+    };
+    ads1220b: ads1220b@3 {
+        status = "okay";
+        compatible = "ads1220";
+        reg = <3>;
+        spi-max-frequency = <6400000>;
+        drdy-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
     };
 };

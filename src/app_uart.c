@@ -14,7 +14,7 @@
 
 #include <zephyr/logging/log.h>
 /* Reduce verbosity to avoid RTT/log backend overflow during bursts */
-LOG_MODULE_REGISTER(app_uart, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(app_uart, LOG_LEVEL_WRN);
 
 #define UART_TX_THREAD_STACKSIZE 2048
 #define UART_TX_THREAD_PRIORITY  6

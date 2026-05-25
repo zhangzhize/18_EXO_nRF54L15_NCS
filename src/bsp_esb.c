@@ -192,6 +192,11 @@ int esb_initialize(void)
     config.retransmit_count = 6;
     config.bitrate = ESB_BITRATE_4MBPS;
 
+    /** 如改为500Hz的发送频率 */
+    // config.tx_output_power = 8;
+    // config.retransmit_delay = 250; /* 500 us */
+    // config.retransmit_count = 5;
+
     err = esb_init(&config);
     if (err)
     {

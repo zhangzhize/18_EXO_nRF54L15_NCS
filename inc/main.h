@@ -14,7 +14,7 @@ extern "C" {
 #define RIGHT_FOOT_NODE_ID      0x03
 #define BRIDGE_NODE_ID          0x04
 
-#define THIS_NODE_ID            RIGHT_FOOT_NODE_ID
+#define THIS_NODE_ID            STM32H7_NODE_ID
 
 #define SAMPLE_PERIOD_US        5000U
 
@@ -22,7 +22,7 @@ typedef struct foot_sensor_packet_t
 {
     int32_t mV_heel;
     int32_t mV_toe;
-    float mV_pull;
+    float force;
     float quatI;
     float quatJ;
     float quatK;
