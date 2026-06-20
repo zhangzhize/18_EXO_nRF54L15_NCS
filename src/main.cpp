@@ -174,9 +174,9 @@ int main(void)
 
         tx_payload.data[0] = THIS_NODE_ID;
 
-        // uint32_t key = irq_lock();
+        uint32_t key = irq_lock();
         memcpy(tx_payload.data + 1, &foot_sensor_data, sizeof(foot_sensor_data));
-        // irq_unlock(key);
+        irq_unlock(key);
 
         tx_payload.length = 1 + sizeof(foot_sensor_data);
         tx_payload.noack = false;
@@ -214,6 +214,8 @@ int main(void)
 #define ADS_THREAD_STACKSIZE 1024
 #define ADS_THREAD_PRIORITY  6
 
+#define BNO_REPORT_INTERVAL_MS 5
+
 void bno085_thread(void *p1, void *p2, void *p3)
 {
     LOG_INF("Initializing BNO085...");
@@ -222,7 +224,7 @@ void bno085_thread(void *p1, void *p2, void *p3)
         LOG_ERR("bno085 begin failed!");
         return;
     }
-    if (!bno085.enableRotationVector(10))
+    if (!bno085.enableRotationVector(BNO_REPORT_INTERVAL_MS))
     {
         LOG_ERR("bno085 rotation vector enable failed!");
         // return;
@@ -232,7 +234,7 @@ void bno085_thread(void *p1, void *p2, void *p3)
         if (bno085.wasReset())
         {
             LOG_INF("bno085 was reset"); 
-            if (!bno085.enableRotationVector(10))
+            if (!bno085.enableRotationVector(BNO_REPORT_INTERVAL_MS))
             {
                 LOG_ERR("bno085 rotation vector enable failed!");
             }
@@ -324,10 +326,6 @@ void force_meas_thread(void *p1, void *p2, void *p3)
         return;
     }
 
-    // int32_t left_uV_0_1 = 0;  // 已改为全局
-    // int32_t left_uV_2_3 = 0;
-    // int32_t right_uV_0_1 = 0;
-    // int32_t right_uV_2_3 = 0;
     int32_t a_raw_data = 0;
     int32_t b_raw_data = 0;
     while (1)
