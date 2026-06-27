@@ -1,0 +1,49 @@
+/*
+ * Common foot sensor node hardware:
+ * I2C sensors (BNO085, ADS122C04, MLX90393) + ADC + PCAP01.
+ */
+
+#include "../../../common/boards/xiao_base.overlay"
+
+/* I2C22: foot sensors */
+&i2c22 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	mlx90393: mlx90393@c {
+		compatible = "i2c-device";
+		reg = <0x0c>;
+	};
+	bno085: bno085@4b {
+		compatible = "bno08x";
+		reg = <0x4b>;
+		intn-gpios = <&gpio1 14 (GPIO_ACTIVE_LOW)>;
+		nrst-gpios = <&gpio2 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};
+	ads122c04: ads122c04@40 {
+		compatible = "ads122c04";
+		reg = <0x40>;
+		drdy-gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};
+};
+
+/* I2C30 only hosts the onboard LSM6DSO, which is not used on foot nodes. */
+&i2c30 { status = "disabled"; };
+
+
+/* SPI: PCAP01 capacitance sensor */
+&xiao_spi {
+	status = "okay";
+	compatible = "nordic,nrf-spim";
+	cs-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>, <&gpio2 6 GPIO_ACTIVE_LOW>, <&gpio2 10 GPIO_ACTIVE_LOW>;
+	icm42688: icm42688@0 {
+		status = "disabled";
+		reg = <0>;
+	};
+	pcap01: pcap01@2 {
+		status = "okay";
+		compatible = "pcap01";
+		reg = <2>;
+		spi-max-frequency = <6400000>;
+		intn-gpios = <&gpio0 1 GPIO_ACTIVE_LOW>;
+	};
+};

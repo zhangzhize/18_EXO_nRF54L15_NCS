@@ -1,0 +1,78 @@
+BasedOnStyle: Google
+
+BreakBeforeBraces: Allman
+ColumnLimit: 0
+MaxEmptyLinesToKeep: 1
+
+# 缩进
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ContinuationIndentWidth: 2
+AccessModifierOffset: -2
+ConstructorInitializerIndentWidth: 2
+IndentCaseLabels: false
+IndentExternBlock: NoIndent
+
+# 对齐
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: Align
+AlignTrailingComments: false
+
+# 指针引用符号位置
+PointerAlignment: Right
+ReferenceAlignment: Right
+DerivePointerAlignment: false
+QualifierAlignment: Leave
+
+# 短语句控制
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+
+# 函数参数
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# 空格控制
+SpaceAfterCStyleCast: false
+SpaceBeforeParens: ControlStatements
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpacesInAngles: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+
+# 初始化列表缩进，逗号前换行
+BreakConstructorInitializers: AfterColon
+PackConstructorInitializers: Never
+
+# 运算符换行
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+
+# namespace
+NamespaceIndentation: None
+FixNamespaceComments: true
+CompactNamespaces: false
+
+# 不自动重排注释（避免破坏中文注释）
+ReflowComments: IndentOnly
+
+# include
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# 自动结构修改：不建议开启
+InsertBraces: false
+RemoveBracesLLVM: false

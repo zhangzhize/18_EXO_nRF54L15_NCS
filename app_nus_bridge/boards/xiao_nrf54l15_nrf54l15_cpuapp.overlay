@@ -1,0 +1,8 @@
+/* BLE NUS to UART bridge. */
+
+#include "../../common/boards/xiao_base.overlay"
+
+/* Sensor buses are unused by this application. */
+&xiao_spi { status = "disabled"; };
+&i2c22 { status = "disabled"; };
+&i2c30 { status = "disabled"; };

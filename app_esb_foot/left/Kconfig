@@ -1,0 +1,11 @@
+#
+# Copyright (c) 2025
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+source "Kconfig.zephyr"
+
+rsource "../../common/Kconfig"
+
+# ESB role and node ID are set explicitly in prj.conf.

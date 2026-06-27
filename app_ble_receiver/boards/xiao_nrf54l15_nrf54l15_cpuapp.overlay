@@ -1,0 +1,20 @@
+/* BLE central sensor gateway with an SPI link to STM32. */
+
+#include "../../common/boards/xiao_base.overlay"
+
+&i2c22 { status = "disabled"; };
+&i2c30 { status = "disabled"; };
+
+/* CS index 1 is wired to the STM32 interface. */
+&xiao_spi {
+	status = "okay";
+	compatible = "nordic,nrf-spim";
+	cs-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>, <&gpio2 6 GPIO_ACTIVE_LOW>;
+
+	stm32_slave: stm32_slave@1 {
+		status = "okay";
+		compatible = "stm32-slave";
+		reg = <1>;
+		spi-max-frequency = <8000000>;
+	};
+};

@@ -1,0 +1,14 @@
+#
+# Copyright (c) 2025
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+# Node ID carried by the inter-node protocol.
+config EXO_NODE_ID
+	int "Exoskeleton Node ID"
+	default 1
+	range 1 6
+	help
+	  Unique node ID for this firmware image. The protocol values are
+	  defined in common/inc/exo_node.h.

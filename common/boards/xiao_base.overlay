@@ -1,0 +1,36 @@
+/*
+ * Shared XIAO nRF54L15 pin configuration.
+ * App overlays enable only the peripherals they use.
+ */
+
+/ {
+	zephyr,user {
+		io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>;
+	};
+};
+
+&uart20 {
+	current-speed = <1000000>;
+	status = "disabled";
+};
+
+&uart21 {
+	current-speed = <1000000>;
+};
+
+/ {
+	chosen {
+		/delete-property/ zephyr,console;
+		/delete-property/ zephyr,shell-uart;
+		/delete-property/ nordic,rpc-uart;
+	};
+};
+
+/* Disable onboard peripherals whose pins are reused by custom hardware. */
+&pdm20 { status = "disabled"; };
+&vbat_pwr { status = "disabled"; };
+&pdm_imu_pwr { status = "disabled"; };
+&nfct { status = "disabled"; };
+&uicr { nfct-pins-as-gpios; };
+&usr_btn { status = "disabled"; };
+&lsm6ds3tr_c { status = "disabled"; };

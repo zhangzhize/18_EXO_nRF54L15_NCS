@@ -1,13 +1,17 @@
-# editors
-*.swp
-*~
+# Editors
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/tasks.json
 
-# build
-/build
+# Agent files
+.agents/
+.claude/
 
-.pio
-.settings
-/Debug
-/Release
+# Build outputs
+**/build*/
 
-.vscode
+# Test files
+/test
+
+# Python
+__pycache__/

@@ -1,0 +1,13 @@
+# dts/bindings/pcap01.yaml
+
+description: PCAP01 capacitance-to-digital converter
+
+compatible: "pcap01"
+
+include: spi-device.yaml
+
+properties:
+  intn-gpios:
+    type: phandle-array
+    required: false
+    description: Interrupt pin asserted when PCAP01 has measurement data.
